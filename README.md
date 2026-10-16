@@ -99,7 +99,7 @@ analisador-postura/
 ### Opção B — manual (Windows, Linux ou macOS)
 ```bash
 # 1. Clonar o repositório
-git clone <URL-DO-REPOSITORIO>
+git clone https://github.com/Diego-Massing/analisador-postura.git
 cd analisador-postura
 
 # 2. Criar o ambiente virtual
