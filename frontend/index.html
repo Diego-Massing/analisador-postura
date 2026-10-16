@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<!--
+  index.html
+  Página única do Analisador Ergonômico de Postura.
+  Fluxo: 1) usuário escolhe/tira a foto  2) clica em "Analisar"  3) vê o resultado.
+  O comportamento fica em app.js e o visual em style.css.
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alinha · Analisador de Postura</title>
+  <meta name="description" content="Envie uma foto de perfil sentado e descubra se sua postura está prejudicando o pescoço e as costas.">
+  <!-- Ícone da aba: SVG embutido (uma coluna estilizada), sem precisar de arquivo extra -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Ccircle cx='16' cy='7' r='3.2' fill='white'/%3E%3Cpath d='M16 12v15M11 16h10M12 21h8' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+  <!-- Cabeçalho com a marca e a chamada principal -->
+  <header class="topo">
+    <div class="topo-conteudo">
+      <div class="marca">
+        <!-- Logotipo: pessoa com a coluna alinhada (SVG desenhado à mão) -->
+        <svg class="marca-icone" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="7" r="3.2" fill="currentColor"/>
+          <path d="M16 12v15M11 16h10M12 21h8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span>Alinha</span>
+      </div>
+      <h1>Sua postura está te machucando?</h1>
+      <p>Envie uma foto sua sentado(a) de lado. Em segundos, mostramos os ângulos do seu pescoço e da sua coluna, e dicas para corrigir.</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Barra de progresso: indica em que etapa o usuário está -->
+    <ol class="etapas" aria-label="Etapas">
+      <li id="etapa-1" class="ativa"><span>1</span> Foto</li>
+      <li id="etapa-2"><span>2</span> Análise</li>
+      <li id="etapa-3"><span>3</span> Resultado</li>
+    </ol>
+
+    <!-- Passo 1: dicas e envio da foto -->
+    <section class="cartao" id="secao-envio">
+      <h2>Como tirar a foto</h2>
+
+      <!-- Dicas em formato de cartões pequenos, com ícone -->
+      <ul class="dicas">
+        <li><span class="dica-icone">📐</span><div><strong>De lado (perfil)</strong><small>Câmera na altura do tronco</small></div></li>
+        <li><span class="dica-icone">🧍</span><div><strong>Cabeça até o quadril</strong><small>Sem objetos na frente</small></div></li>
+        <li><span class="dica-icone">💡</span><div><strong>Boa iluminação</strong><small>Evite contraluz de janela</small></div></li>
+        <li><span class="dica-icone">🪑</span><div><strong>Postura do dia a dia</strong><small>Como você trabalha ou estuda</small></div></li>
+      </ul>
+
+      <!-- Área clicável que também aceita arrastar e soltar -->
+      <label class="area-upload" id="area-upload" for="campo-foto">
+        <input type="file" id="campo-foto" accept="image/jpeg,image/png,image/webp" hidden>
+        <img id="previa" alt="Prévia da foto escolhida" hidden>
+        <span id="texto-upload" class="texto-upload">
+          <!-- Ícone de câmera -->
+          <svg width="52" height="52" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          <strong>Clique para escolher uma foto</strong>
+          <small>ou arraste a imagem para cá · JPG, PNG ou WEBP até 10 MB</small>
+        </span>
+        <!-- Aparece por cima da prévia, para deixar claro que dá para trocar -->
+        <span id="trocar-foto" class="trocar-foto" hidden>Trocar foto</span>
+      </label>
+
+      <button id="botao-analisar" class="botao" disabled>Analisar minha postura</button>
+      <p id="mensagem-erro" class="erro" role="alert" hidden></p>
+    </section>
+
+    <!-- Passo 2: resultado (fica escondido até a análise terminar) -->
+    <section class="cartao" id="secao-resultado" hidden>
+      <!-- Faixa com o resumo geral (cor muda conforme a classificação) -->
+      <div id="faixa-geral" class="faixa">
+        <span id="faixa-icone" class="faixa-icone"></span>
+        <div>
+          <strong id="faixa-titulo"></strong>
+          <span id="faixa-texto"></span>
+        </div>
+      </div>
+
+      <div class="resultado-grade">
+        <figure class="figura-resultado">
+          <img id="imagem-resultado" alt="Foto com o esqueleto e os ângulos desenhados">
+          <figcaption>
+            Linhas coloridas: <b>tronco</b> (quadril → ombro) e <b>pescoço</b> (ombro → orelha).
+            A linha tracejada é a vertical ideal.
+          </figcaption>
+          <a id="baixar-imagem" class="link-baixar" download="analise-postura.jpg">⬇ Baixar imagem</a>
+        </figure>
+
+        <div class="indicadores">
+          <!-- Os cartões de pescoço e tronco são preenchidos pelo app.js -->
+          <div id="indicador-pescoco" class="indicador"></div>
+          <div id="indicador-tronco" class="indicador"></div>
+        </div>
+      </div>
+
+      <div id="bloco-recomendacoes" class="recomendacoes">
+        <h3>O que você pode fazer</h3>
+        <ul id="lista-recomendacoes"></ul>
+      </div>
+
+      <button id="botao-nova" class="botao secundario">Analisar outra foto</button>
+    </section>
+
+    <p class="aviso">
+      🔒 A foto é processada apenas para gerar o resultado e <strong>não é armazenada</strong>.
+      Esta ferramenta é educativa e preventiva e <strong>não substitui a avaliação de um profissional de saúde</strong>.
+    </p>
+  </main>
+
+  <footer>
+    Projeto Extensionista · Processamento de Imagens · FSG 2026/2<br>
+    Detecção de pose com YOLO11 (Ultralytics) · Critérios baseados no método RULA
+  </footer>
+
+  <script src="app.js?v=3"></script>
+</body>
+</html>

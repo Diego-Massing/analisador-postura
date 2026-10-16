@@ -1,0 +1,7 @@
+# Dependências do back-end (Python 3.12)
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+ultralytics==8.4.175
+opencv-python==5.0.0.93
+numpy==2.5.3

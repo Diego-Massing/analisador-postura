@@ -1,0 +1,13 @@
+# Ambiente virtual do Python
+.venv/
+__pycache__/
+*.pyc
+
+# Modelo baixado automaticamente na primeira execução
+backend/modelos/*.pt
+
+# Arquivos do sistema/editor
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
