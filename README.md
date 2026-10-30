@@ -95,7 +95,7 @@ analisador-postura/
    Na primeira vez ele cria o ambiente virtual e instala tudo (pode levar alguns minutos, o PyTorch é grande).
    O ambiente fica em `%LOCALAPPDATA%\venvs\analisador-postura`, fora da pasta do projeto, para não ser
    sincronizado por OneDrive/Google Drive.
-3. O navegador abre em <http://localhost:8000>. Se a página não carregar de primeira, aguarde alguns segundos e atualize.
+3. O navegador abre sozinho em <http://localhost:8000> assim que o servidor estiver pronto.
 4. Para encerrar, feche a janela preta do terminal (ou aperte `Ctrl+C` nela).
 
 #### Como o `iniciar.bat` funciona
@@ -110,7 +110,7 @@ O `iniciar.bat` é um script do Prompt de Comando do Windows que automatiza a Op
 | 5 | `set "PYTHON=..."` | Procura o Python 3.12 em três lugares, nesta ordem: a pasta padrão de instalação (`%LOCALAPPDATA%\Programs\Python\Python312`), o lançador `py -3.12` e o comando `python`. Se não achar nenhum, mostra como instalar (`winget install Python.Python.3.12`) e para. |
 | 6 | `python -m venv "%VENV%"` | Cria o ambiente virtual, uma cópia isolada do Python só para este projeto. |
 | 7 | `pip install -r requirements.txt` | Atualiza o `pip` e instala as bibliotecas com as versões fixas do `requirements.txt` (FastAPI, Ultralytics, PyTorch, OpenCV...). É a parte demorada, cerca de 1 GB de download. |
-| 8 | `start "" http://localhost:8000` | Abre o navegador padrão no endereço da aplicação. |
+| 8 | `start "" /b powershell ...` | Inicia, em segundo plano, um pequeno laço em PowerShell que consulta `http://127.0.0.1:8000/api/saude` a cada 1 segundo (por até 2 minutos). Assim que o servidor responde, abre o navegador padrão em <http://localhost:8000>. Dessa forma a página só abre quando o servidor já está pronto, sem precisar atualizar (F5). A consulta usa `127.0.0.1` porque, no Windows, `localhost` tenta primeiro o endereço IPv6 (`::1`), onde o servidor não escuta. |
 | 9 | `cd backend` + `python -m uvicorn app:app --host 0.0.0.0 --port 8000` | Entra na pasta `backend` e inicia o servidor com o Python do ambiente virtual. Ao iniciar, o `postura.py` carrega o modelo; se o arquivo `yolo11n-pose.pt` ainda não existir em `backend/modelos/`, a Ultralytics o baixa automaticamente (≈ 6 MB). |
 | 10 | `pause` | Se o servidor parar por algum erro, a janela não fecha sozinha, para que a mensagem possa ser lida. |
 

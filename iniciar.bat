@@ -28,9 +28,14 @@ if not exist "%VENV%\Scripts\python.exe" (
     "%VENV%\Scripts\python.exe" -m pip install -r requirements.txt
 )
 
-REM Abre o navegador e sobe o servidor
-echo Abrindo http://localhost:8000 ...
-start "" http://localhost:8000
+REM Abre o navegador so quando o servidor estiver pronto: um PowerShell em segundo plano
+REM consulta /api/saude a cada 1 segundo (por ate 2 minutos) e, quando responder, abre a pagina.
+REM Usa 127.0.0.1 e nao "localhost": no Windows "localhost" tenta primeiro o IPv6 (::1),
+REM onde o servidor nao escuta, e a consulta esgotaria o tempo.
+echo Iniciando o servidor... o navegador abre sozinho quando estiver pronto.
+start "" /b powershell -NoProfile -Command "for ($i = 0; $i -lt 120; $i++) { try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:8000/api/saude | Out-Null; Start-Process 'http://localhost:8000'; break } catch { Start-Sleep -Seconds 1 } }"
+
+REM Sobe o servidor (fica rodando nesta janela)
 cd backend
 "%VENV%\Scripts\python.exe" -m uvicorn app:app --host 0.0.0.0 --port 8000
 pause
