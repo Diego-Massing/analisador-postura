@@ -1,63 +1,42 @@
 #!/usr/bin/env bash
 # ------------------------------------------------------------------
-# iniciar.sh - Inicia o Analisador Ergonômico de Postura (Alinha)
-# Funciona no Linux, no macOS e no Windows pelo Git Bash.
+# iniciar.sh - Inicia o Analisador Ergonômico de Postura (Alinha) no Linux
+# (no Windows use o iniciar.bat)
 # Na primeira execução cria o ambiente virtual e instala as dependências.
-# O ambiente virtual fica fora da pasta do projeto (cerca de 1 GB) para não
-# ser sincronizado por OneDrive/Google Drive:
-#   - Windows (Git Bash): %LOCALAPPDATA%\venvs\analisador-postura (o mesmo do iniciar.bat)
-#   - Linux/macOS:        ~/.venvs/analisador-postura
+# O ambiente virtual fica em ~/.venvs/analisador-postura, fora da pasta do
+# projeto, porque ocupa cerca de 1 GB.
 # Uso: bash iniciar.sh   (ou ./iniciar.sh depois de "chmod +x iniciar.sh")
 # ------------------------------------------------------------------
 
 # Entra na pasta onde o script está, mesmo que ele seja chamado de outro lugar
 cd "$(dirname "$0")" || exit 1
 
-# Define onde fica o ambiente virtual
-if [ -n "$LOCALAPPDATA" ]; then
-    VENV="$LOCALAPPDATA/venvs/analisador-postura"
-else
-    VENV="$HOME/.venvs/analisador-postura"
-fi
-
-# Caminho do Python dentro do ambiente virtual (bin/ no Linux/macOS, Scripts/ no Windows)
-python_do_venv() {
-    if [ -x "$VENV/bin/python" ]; then
-        echo "$VENV/bin/python"
-    elif [ -x "$VENV/Scripts/python.exe" ]; then
-        echo "$VENV/Scripts/python.exe"
-    fi
-}
-
-PY="$(python_do_venv)"
+VENV="$HOME/.venvs/analisador-postura"
+PY="$VENV/bin/python"
 
 # Cria o ambiente virtual caso ainda não exista
-if [ -z "$PY" ]; then
-    # Procura o Python: primeiro a versão 3.12 (a usada no projeto), depois o lançador
-    # "py" do Windows e, por fim, os comandos genéricos python3/python
+if [ ! -x "$PY" ]; then
+    # Procura o Python: primeiro a versão 3.12 (a usada no projeto), depois python3
     PYTHON=""
-    for candidato in python3.12 "py -3.12" python3 python; do
-        if $candidato --version > /dev/null 2>&1; then
+    for candidato in python3.12 python3; do
+        if command -v "$candidato" > /dev/null 2>&1; then
             PYTHON="$candidato"
             break
         fi
     done
     if [ -z "$PYTHON" ]; then
-        echo "Python não encontrado. Instale o Python 3.12:"
-        echo "  Ubuntu/Debian: sudo apt install python3 python3-venv python3-pip"
-        echo "  macOS:         brew install python@3.12"
-        echo "  Windows:       winget install Python.Python.3.12"
+        echo "Python não encontrado. Instale com: sudo apt install python3 python3-venv python3-pip"
         exit 1
     fi
     echo "Usando $($PYTHON --version 2>&1) ($PYTHON)"
     echo "Criando ambiente virtual em $VENV ..."
     mkdir -p "$(dirname "$VENV")"
-    if ! $PYTHON -m venv "$VENV"; then
+    if ! "$PYTHON" -m venv "$VENV"; then
         echo "Não foi possível criar o ambiente virtual."
         echo "No Ubuntu/Debian, instale o pacote: sudo apt install python3-venv"
+        rm -rf "$VENV"
         exit 1
     fi
-    PY="$(python_do_venv)"
     echo "Instalando dependências, isso pode levar alguns minutos..."
     "$PY" -m pip install --upgrade pip
     if ! "$PY" -m pip install -r requirements.txt; then
@@ -68,15 +47,6 @@ if [ -z "$PY" ]; then
     fi
 fi
 
-# Abre o endereço no navegador padrão, conforme o sistema
-abrir_navegador() {
-    case "$(uname -s)" in
-        Darwin) open "$1" ;;                                # macOS
-        MINGW*|MSYS*|CYGWIN*) cmd //c start "" "$1" ;;      # Windows (Git Bash)
-        *) xdg-open "$1" > /dev/null 2>&1 ;;                # Linux
-    esac
-}
-
 # Abre o navegador só quando o servidor estiver pronto: em segundo plano, consulta
 # /api/saude a cada 1 segundo (por até 2 minutos) usando o próprio Python do ambiente.
 # Usa 127.0.0.1 e não "localhost", porque "localhost" pode tentar primeiro o IPv6 (::1),
@@ -84,7 +54,7 @@ abrir_navegador() {
 (
     for _ in $(seq 1 120); do
         if "$PY" -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/saude', timeout=2)" 2> /dev/null; then
-            abrir_navegador "http://localhost:8000"
+            xdg-open "http://localhost:8000" > /dev/null 2>&1
             exit 0
         fi
         sleep 1
