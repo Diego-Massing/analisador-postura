@@ -73,7 +73,9 @@ analisador-postura/
 │   ├── app.js          # Escolha e envio da foto, preenchimento da ficha e animações
 │   └── fontes/         # Fonte Figtree (.woff2) guardada no projeto, funciona sem internet
 ├── requirements.txt    # Dependências Python com versões fixas
-├── iniciar.bat         # Atalho para instalar e iniciar no Windows
+├── iniciar.bat         # Atalho para instalar e iniciar no Windows (dois cliques)
+├── iniciar.sh          # Atalho para instalar e iniciar no Linux, macOS e Windows (Git Bash)
+├── .gitattributes      # Mantém o iniciar.sh com quebras de linha do Linux (LF) mesmo vindo do Windows
 └── README.md           # Esta documentação
 ```
 
@@ -121,6 +123,36 @@ O `iniciar.bat` é um script do Prompt de Comando do Windows que automatiza a Op
 > como ele já existe, o script não tenta instalar de novo. Nesse caso, apague a pasta
 > `%LOCALAPPDATA%\venvs\analisador-postura` (cole esse caminho na barra do Explorador de Arquivos) e rode o
 > `iniciar.bat` novamente.
+
+### Opção A2 — automática (Linux, macOS ou Windows pelo Git Bash)
+1. Clone o repositório e entre na pasta:
+   ```bash
+   git clone https://github.com/Diego-Massing/analisador-postura.git
+   cd analisador-postura
+   ```
+2. Execute:
+   ```bash
+   bash iniciar.sh
+   ```
+   (No Linux/macOS também dá para rodar com `./iniciar.sh` depois de `chmod +x iniciar.sh`.)
+3. O navegador abre sozinho em <http://localhost:8000> assim que o servidor estiver pronto.
+4. Para encerrar, aperte `Ctrl+C` no terminal.
+
+> **Linux (Ubuntu/Debian):** se aparecer erro ao criar o ambiente virtual, instale o módulo `venv` com
+> `sudo apt install python3-venv` e rode o script de novo.
+
+#### Como o `iniciar.sh` funciona
+Faz o mesmo que o `iniciar.bat`, adaptado para o terminal Bash:
+
+| Passo | O que faz |
+|---|---|
+| 1 | Entra na pasta do script (`cd "$(dirname "$0")"`). |
+| 2 | Define o ambiente virtual: no Windows (Git Bash) usa o mesmo do `iniciar.bat`, `%LOCALAPPDATA%\venvs\analisador-postura`; no Linux/macOS usa `~/.venvs/analisador-postura`. |
+| 3 | Procura o Python do ambiente em `bin/python` (Linux/macOS) ou `Scripts/python.exe` (Windows). **Se já existe, pula para o passo 6.** |
+| 4 | Procura um Python instalado, nesta ordem: `python3.12`, `py -3.12`, `python3`, `python`. Se não achar, mostra como instalar em cada sistema. |
+| 5 | Cria o ambiente virtual e instala o `requirements.txt`. **Se a instalação falhar, apaga o ambiente incompleto**, para a próxima execução recomeçar do zero. |
+| 6 | Em segundo plano, consulta `http://127.0.0.1:8000/api/saude` a cada 1 segundo (por até 2 minutos), usando o próprio Python do ambiente. Quando o servidor responde, abre o navegador com o comando de cada sistema: `xdg-open` (Linux), `open` (macOS) ou `start` (Windows). |
+| 7 | Entra em `backend/` e inicia o servidor com `uvicorn app:app --host 0.0.0.0 --port 8000`. Ao apertar `Ctrl+C`, encerra também a espera do passo 6. |
 
 ### Opção B — manual (Windows, Linux ou macOS)
 ```bash

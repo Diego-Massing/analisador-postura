@@ -1,0 +1,3 @@
+# Mantém as quebras de linha certas em cada sistema
+*.sh  text eol=lf
+*.bat text eol=crlf
