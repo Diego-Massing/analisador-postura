@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <!--
   index.html
-  Página única do Analisador Ergonômico de Postura.
-  Fluxo: 1) usuário escolhe/tira a foto  2) clica em "Analisar"  3) vê o resultado.
-  O comportamento fica em app.js e o visual em style.css.
+  Página única do Alinha, o analisador de postura sentada.
+  Ordem: barra do topo, abertura (#inicio, esqueleto sentado com os ângulos medidos),
+  "Por que a postura importa" (#por-que), a ferramenta (#analisar: quadro de
+  avaliação + ficha de avaliação), "Como funciona", "Sobre o projeto" e rodapé.
+  O estado da ferramenta fica em section#analisar[data-estado]:
+  vazio -> pronto -> analisando -> resultado (quem troca é o app.js).
+  O visual fica em style.css.
 -->
 <html lang="pt-BR">
 <head>
@@ -11,112 +15,700 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Alinha · Analisador de Postura</title>
   <meta name="description" content="Envie uma foto de perfil sentado e descubra se sua postura está prejudicando o pescoço e as costas.">
-  <!-- Ícone da aba: SVG embutido (uma coluna estilizada), sem precisar de arquivo extra -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Ccircle cx='16' cy='7' r='3.2' fill='white'/%3E%3Cpath d='M16 12v15M11 16h10M12 21h8' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=3">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FFFFFF">
+  <!-- Ícone da aba: SVG embutido (a mesma marca do topo), sem precisar de arquivo extra -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E7C86'/%3E%3Ccircle cx='16' cy='7' r='3.2' fill='white'/%3E%3Cpath d='M16 12v15M11 16h10M12 21h8' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <!-- A fonte Figtree fica na própria pasta do projeto (funciona sem internet) -->
+  <link rel="preload" href="fontes/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
-  <!-- Cabeçalho com a marca e a chamada principal -->
+
+  <!--
+    Conjunto de ícones da página (24x24, traço 1,75, pontas redondas).
+    Cada ícone é usado com <svg><use href="#i-nome"/></svg> e herda a cor do texto.
+  -->
+  <svg hidden focusable="false" aria-hidden="true" width="0" height="0">
+    <!-- Marca de seleção dentro de um círculo: classificação adequada -->
+    <symbol id="i-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M8 12.5l2.7 2.7L16.2 9.5"/>
+    </symbol>
+    <!-- Triângulo com exclamação: classificação de atenção -->
+    <symbol id="i-atencao" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.5L21.5 20h-19z"/>
+      <path d="M12 10v4.5"/>
+      <path d="M12 17.3h.01"/>
+    </symbol>
+    <!-- Octógono com X: classificação inadequada e mensagens de erro -->
+    <symbol id="i-alerta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/>
+      <path d="M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6"/>
+    </symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h3l1.6-2.5h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+      <circle cx="12" cy="13" r="3.5"/>
+    </symbol>
+    <!-- Cabeça e tronco vistos de lado -->
+    <symbol id="i-perfil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="6" r="3"/>
+      <path d="M14 5.6l2 2.2-2 .8"/>
+      <path d="M8.2 12c-1.3 1.6-1.6 5.2-1.1 9"/>
+      <path d="M13.8 12c1.6 1.3 2.5 3.4 2.5 5.4V21"/>
+    </symbol>
+    <!-- Figura sentada da cabeça ao quadril, com a medida ao lado -->
+    <symbol id="i-corpo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="9" cy="5.5" r="2.5"/>
+      <path d="M8 9.5V16h8.5M16.5 16v4.5"/>
+      <path d="M20 3.5v12.5M18.2 3.5h3.6M18.2 16h3.6"/>
+    </symbol>
+    <symbol id="i-luz" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2.5V5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>
+    </symbol>
+    <symbol id="i-cadeira" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7.5 3.5V13h10"/>
+      <path d="M7.5 13v7.5M17.5 13v7.5"/>
+      <path d="M5 20.5h5M15 20.5h5"/>
+    </symbol>
+    <symbol id="i-baixar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.5v12M7.5 11.5L12 16l4.5-4.5"/>
+      <path d="M4 20.5h16"/>
+    </symbol>
+    <symbol id="i-trocar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/>
+      <path d="M20 4v4.5h-4.5"/>
+      <path d="M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/>
+      <path d="M4 20v-4.5h4.5"/>
+    </symbol>
+    <!-- Três pontos ligados: orelha, ombro e quadril -->
+    <symbol id="i-pontos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="17" cy="5" r="2"/>
+      <circle cx="9" cy="12" r="2"/>
+      <circle cx="15" cy="19" r="2"/>
+      <path d="M15.5 6.3L10.5 10.7M10.3 13.5l3.4 4"/>
+    </symbol>
+    <!-- Ângulo: duas retas e o arco entre elas -->
+    <symbol id="i-angulo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 19.5h14.5M5 19.5L16 5"/>
+      <path d="M13 19.5A8 8 0 0 0 9.8 13.1"/>
+    </symbol>
+    <!-- Seta para baixo: dica de rolagem da ficha -->
+    <symbol id="i-baixo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v13M6.5 13l5.5 5.5 5.5-5.5"/>
+    </symbol>
+    <symbol id="i-ficha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="4.5" width="14" height="17" rx="2"/>
+      <path d="M9 4.5v-1h6v1"/>
+      <path d="M9 10h6M9 14h6M9 18h3.5"/>
+    </symbol>
+  </svg>
+
+  <!-- Barra do topo: marca, navegação e chamada para a análise -->
   <header class="topo">
-    <div class="topo-conteudo">
-      <div class="marca">
-        <!-- Logotipo: pessoa com a coluna alinhada (SVG desenhado à mão) -->
-        <svg class="marca-icone" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="7" r="3.2" fill="currentColor"/>
-          <path d="M16 12v15M11 16h10M12 21h8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span>Alinha</span>
-      </div>
-      <h1>Sua postura está te machucando?</h1>
-      <p>Envie uma foto sua sentado(a) de lado. Em segundos, mostramos os ângulos do seu pescoço e da sua coluna, e dicas para corrigir.</p>
-    </div>
+    <a class="marca" href="#inicio" aria-label="Alinha, início">
+      <!-- Logotipo: cabeça (o "peso" do prumo) sobre a coluna com duas marcas de medida -->
+      <svg class="marca-icone" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="7" r="3.4" fill="var(--clinica)"/>
+        <path d="M16 12.5v14.5M11 16.5h10M12 21.5h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span>Alinha</span>
+    </a>
+
+    <nav class="navegacao" aria-label="Seções da página">
+      <a href="#por-que">Por que importa</a>
+      <a href="#analisar">Analisar</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#sobre">Sobre</a>
+    </nav>
+
+    <a class="botao botao-pilula botao-topo" href="#analisar">Começar a analisar</a>
   </header>
 
   <main>
-    <!-- Barra de progresso: indica em que etapa o usuário está -->
-    <ol class="etapas" aria-label="Etapas">
-      <li id="etapa-1" class="ativa"><span>1</span> Foto</li>
-      <li id="etapa-2"><span>2</span> Análise</li>
-      <li id="etapa-3"><span>3</span> Resultado</li>
-    </ol>
+    <!--
+      Abertura: ocupa a primeira tela inteira. Fundo com a mesma grade do quadro,
+      esqueleto sentado de perfil com os dois ângulos medidos (pescoço e tronco),
+      título grande no canto inferior esquerdo.
+    -->
+    <section id="inicio" class="hero" aria-labelledby="titulo-hero">
+      <div class="hero-figura">
+<svg class="hero-svg" viewBox="0 0 640 740" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="fig-titulo fig-desc" focusable="false">
+<title id="fig-titulo">Esqueleto sentado, visto de perfil, com os ângulos do pescoço e do tronco</title>
+<desc id="fig-desc">Ilustração com valores de exemplo: o pescoço inclinado cerca de 32 graus e o tronco cerca de 10 graus em relação à vertical, como a análise mede na sua foto.</desc>
+<g class="g-prumo">
+<path class="tr prumo-linha" pathLength="1" d="M219.5 0V621.4"/>
+<circle class="bob" cx="219.5" cy="15" r="8"/>
+</g>
+<g class="g-mov">
+<path class="tr lin-chao" pathLength="1" style="--d:0.15s" d="M114.6 607.6L579 607.6"/>
+<rect class="tr" pathLength="1" style="--d:0.2s" x="147.3" y="452.8" width="178.9" height="9.5" rx="4.3"/>
+<g transform="rotate(-4 150.7 449.4)">
+<rect class="tr" pathLength="1" style="--d:0.25s" x="140.4" y="298" width="10.3" height="153.1" rx="5.2"/>
+</g>
+<path class="tr" pathLength="1" style="--d:0.3s" d="M231.6 462.3V566.3M240.2 462.3V566.3"/>
+<path class="tr" pathLength="1" style="--d:0.32s" d="M235.9 566.3L183.4 590.4M235.9 566.3L288.3 590.4"/>
+<circle class="tr" pathLength="1" style="--d:0.34s" cx="181.7" cy="599.9" r="7.7"/>
+<circle class="tr" pathLength="1" style="--d:0.34s" cx="290" cy="599.9" r="7.7"/>
+<rect class="tr" pathLength="1" style="--d:0.2s" x="352" y="337.6" width="227" height="9.5" rx="2.6"/>
+<path class="tr" pathLength="1" style="--d:0.28s" d="M560.1 347V607.6M570.4 347V607.6"/>
+<rect class="tr" pathLength="1" style="--d:0.3s" x="491.3" y="103.6" width="9.5" height="122.1" rx="3.4"/>
+<path class="tr" pathLength="1" style="--d:0.34s" d="M496 225.8V330.7"/>
+<rect class="tr" pathLength="1" style="--d:0.34s" x="474.1" y="330.7" width="44.7" height="6.9" rx="2.6"/>
+</g>
+<g class="g-pelve">
+<path class="tr cheio" pathLength="1" style="--d:0.62s" d="M202.3 387.4L221.2 392.6L212.6 418.4L196.3 438.2L189.4 424.4L196.3 401.2Z"/>
+<path class="tr cheio" pathLength="1" style="--d:0.58s" d="M197.2 380.6C210.9 372 229.8 373.7 236.7 382.3L240.2 396L235 404.6C241.9 415 245.3 428.7 245.3 440.8L233.3 444.2C226.4 451.1 214.4 458 204 454.5C197.2 451.1 195.4 439 198.9 428.7C193.7 416.7 192 396 197.2 380.6Z"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.62s" cx="219.5" cy="421.8" r="12.9"/>
+<path class="tr cheio" pathLength="1" style="--d:0.7s" d="M219.7 427L379.8 421.8L379.2 408.1L219.3 416.7Z"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.7s" cx="219.5" cy="421.8" r="9.5"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.74s" cx="379.5" cy="415" r="12.9"/>
+<ellipse class="tr cheio" pathLength="1" style="--d:0.76s" cx="396.7" cy="415" rx="5.2" ry="8.6"/>
+<path class="tr cheio" pathLength="1" style="--d:0.78s" d="M373.9 427.3L382.1 587.4L395.8 586.6L385.1 426.7Z"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.78s" cx="380.3" cy="427" r="12"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.84s" cx="388.9" cy="587" r="7.7"/>
+<path class="tr cheio" pathLength="1" style="--d:0.86s" d="M374.3 583.5L401.8 580.1C412.2 590.4 436.2 595.6 441.4 604.2L439.7 607.6L369.2 607.6C362.3 607.6 362.3 597.3 367.4 593.8Z"/>
+</g>
+<g class="g-costelas">
+<path class="tr costela" pathLength="1" style="--d:0.68s" d="M223.2 199.4C235.9 213.2 252.4 233.7 264.9 223.4"/>
+<path class="tr costela" pathLength="1" style="--d:0.71s" d="M216.8 209.2C231.2 223 251.6 244.9 266.6 234.6"/>
+<path class="tr costela" pathLength="1" style="--d:0.74s" d="M210.2 219C226.4 232.7 250.8 256.1 268.3 245.8"/>
+<path class="tr costela" pathLength="1" style="--d:0.77s" d="M204.7 229.3C222.5 243.1 250.4 267.4 269.9 257.1"/>
+<path class="tr costela" pathLength="1" style="--d:0.8s" d="M201.1 240.5C220 254.3 250.4 278.6 271.6 268.3"/>
+<path class="tr costela" pathLength="1" style="--d:0.83s" d="M198.6 252C218.5 265.7 250.9 289.8 273.3 279.5"/>
+<path class="tr costela" pathLength="1" style="--d:0.86s" d="M197 263.6C217.6 277.4 251.6 301.1 274.9 290.7"/>
+<path class="tr costela" pathLength="1" style="--d:0.89s" d="M196 275.3C217.9 289.1 254.6 315.2 279.7 304.9"/>
+<path class="tr costela" pathLength="1" style="--d:0.92s" d="M196.3 287.1C217.4 300.8 252.3 327.2 276.3 316.9"/>
+<path class="tr costela" pathLength="1" style="--d:0.95s" d="M197.5 298.7C216.8 312.5 247.8 337.6 269.4 327.2"/>
+<path class="tr costela" pathLength="1" style="--d:0.98s" d="M199.2 310.4C216.4 320.7 233.6 336.2 249.1 336.2"/>
+<path class="tr costela" pathLength="1" style="--d:0.98s" d="M202.2 321.7C219.4 332 222.9 337.2 238.3 337.2"/>
+<path class="tr cheio" pathLength="1" style="--d:0.7s" d="M262.5 208.6L269.4 207.7L281.4 292.8L274.6 295.4Z"/>
+</g>
+<g class="g-coluna">
+<path class="tr canal" pathLength="1" style="--d:0.35s" d="M276.3 158.7L272.9 161.6L269.6 164.5L266.3 167.4L262.9 170.2L259.4 172.9L255.8 175.5L252 177.8L248 179.7L243.9 181.3L239.8 182.8L235.6 184.3L231.5 186L227.7 188.2L225.2 191.7L224.6 196.1L222.9 200.1L220.5 203.9L218 207.5L215.5 211.1L212.9 214.8L210.5 218.5L208.2 222.3L206.1 226.1L204.3 230.2L202.8 234.3L201.6 238.6L200.5 242.8L199.5 247.2L198.7 251.5L198 255.9L197.4 260.2L196.9 264.6L196.4 269L196.1 273.4L196 277.8L196.1 282.3L196.3 286.7L196.7 291.1L197.1 295.5L197.6 299.9L198.2 304.3L198.8 308.6L199.8 312.9L200.9 317.2L202.2 321.5L203.4 325.7L204.9 329.8L206.3 334L207.8 338.2L209.3 342.3L210.8 346.5L212.1 350.7L213.3 355L214.3 359.3L214.7 363.7L214.8 368.1L214.6 372.5L214.3 376.9L213.9 381.3L213.5 385.7L204 409.8L195.4 433.9"/>
+<g class="vert" style="--d:0.4s" transform="translate(276.3 158.7) rotate(49.9)">
+<rect class="tr cheio" pathLength="1" x="-4.7" y="-3.4" width="9.5" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-4.7 -1L-11.6 1.4"/>
+</g>
+<g class="vert" style="--d:0.42s" transform="translate(269.2 164.9) rotate(48.9)">
+<rect class="tr cheio" pathLength="1" x="-5.6" y="-3.4" width="11.2" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-5.6 -1L-12.5 1.4"/>
+</g>
+<g class="vert" style="--d:0.44s" transform="translate(262 170.9) rotate(51.6)">
+<rect class="tr cheio" pathLength="1" x="-5.6" y="-3.4" width="11.2" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-5.6 -1L-15 1.9"/>
+</g>
+<g class="vert" style="--d:0.46s" transform="translate(254.4 176.5) rotate(59)">
+<rect class="tr cheio" pathLength="1" x="-5.6" y="-3.4" width="11.2" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-5.6 -1L-15 1.9"/>
+</g>
+<g class="vert" style="--d:0.48s" transform="translate(245.9 180.5) rotate(68.7)">
+<rect class="tr cheio" pathLength="1" x="-5.6" y="-3.4" width="11.2" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-5.6 -1L-15 1.9"/>
+</g>
+<g class="vert" style="--d:0.5s" transform="translate(237.1 183.7) rotate(69.7)">
+<rect class="tr cheio" pathLength="1" x="-5.6" y="-3.4" width="11.2" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-5.6 -1L-15 1.9"/>
+</g>
+<g class="vert" style="--d:0.52s" transform="translate(228.5 187.6) rotate(55.7)">
+<rect class="tr cheio" pathLength="1" x="-5.6" y="-3.4" width="11.2" height="6.9" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-5.6 -1L-15 1.9"/>
+</g>
+<g class="vert" style="--d:0.54s" transform="translate(223.2 199.4) rotate(27.8)">
+<rect class="tr cheio" pathLength="1" x="-7.3" y="-4.7" width="14.6" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-7.3 -1L-21.9 11"/>
+</g>
+<g class="vert" style="--d:0.56s" transform="translate(216.8 209.2) rotate(35)">
+<rect class="tr cheio" pathLength="1" x="-7.7" y="-4.7" width="15.3" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-7.7 -1L-22.3 11"/>
+</g>
+<g class="vert" style="--d:0.58s" transform="translate(210.2 219) rotate(31.6)">
+<rect class="tr cheio" pathLength="1" x="-8" y="-4.7" width="16" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-8 -1L-22.6 11"/>
+</g>
+<g class="vert" style="--d:0.6s" transform="translate(204.7 229.3) rotate(22)">
+<rect class="tr cheio" pathLength="1" x="-8.4" y="-4.7" width="16.7" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-8.4 -1L-23 11"/>
+</g>
+<g class="vert" style="--d:0.62s" transform="translate(201.1 240.5) rotate(14)">
+<rect class="tr cheio" pathLength="1" x="-8.7" y="-4.7" width="17.4" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-8.7 -1L-23.3 11"/>
+</g>
+<g class="vert" style="--d:0.64s" transform="translate(198.6 252) rotate(9.6)">
+<rect class="tr cheio" pathLength="1" x="-9.1" y="-4.7" width="18.1" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-9.1 -1L-23.7 11"/>
+</g>
+<g class="vert" style="--d:0.66s" transform="translate(197 263.6) rotate(6.5)">
+<rect class="tr cheio" pathLength="1" x="-9.4" y="-4.7" width="18.8" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-9.4 -1L-24 11"/>
+</g>
+<g class="vert" style="--d:0.68s" transform="translate(196 275.3) rotate(1.3)">
+<rect class="tr cheio" pathLength="1" x="-9.8" y="-4.7" width="19.5" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-9.8 -1L-24.4 11"/>
+</g>
+<g class="vert" style="--d:0.7s" transform="translate(196.3 287.1) rotate(-4.1)">
+<rect class="tr cheio" pathLength="1" x="-10.1" y="-4.7" width="20.2" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-10.1 -1L-24.7 11"/>
+</g>
+<g class="vert" style="--d:0.72s" transform="translate(197.5 298.7) rotate(-6.8)">
+<rect class="tr cheio" pathLength="1" x="-10.5" y="-4.7" width="21" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-10.5 -1L-25.1 11"/>
+</g>
+<g class="vert" style="--d:0.74s" transform="translate(199.2 310.4) rotate(-12.2)">
+<rect class="tr cheio" pathLength="1" x="-10.8" y="-4.7" width="21.7" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-10.8 -1L-22 2.8"/>
+</g>
+<g class="vert" style="--d:0.76s" transform="translate(202.2 321.7) rotate(-15.3)">
+<rect class="tr cheio" pathLength="1" x="-11.2" y="-4.7" width="22.4" height="9.5" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-11.2 -1L-22.4 2.8"/>
+</g>
+<g class="vert" style="--d:0.78s" transform="translate(205.6 331.9) rotate(-18.1)">
+<rect class="tr cheio" pathLength="1" x="-12.9" y="-6" width="25.8" height="12" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-12.9 -1L-23.2 1.2"/>
+</g>
+<g class="vert" style="--d:0.8s" transform="translate(210.2 344.9) rotate(-19.2)">
+<rect class="tr cheio" pathLength="1" x="-13.2" y="-6" width="26.4" height="12" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-13.2 -1L-23.5 1.2"/>
+</g>
+<g class="vert" style="--d:0.82s" transform="translate(214.1 358.2) rotate(-10.2)">
+<rect class="tr cheio" pathLength="1" x="-13.5" y="-6" width="27.1" height="12" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-13.5 -1L-23.9 1.2"/>
+</g>
+<g class="vert" style="--d:0.84s" transform="translate(214.6 372) rotate(3.3)">
+<rect class="tr cheio" pathLength="1" x="-13.9" y="-6" width="27.7" height="12" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-13.9 -1L-24.2 1.2"/>
+</g>
+<g class="vert" style="--d:0.86s" transform="translate(213.5 385.7) rotate(3.2)">
+<rect class="tr cheio" pathLength="1" x="-14.2" y="-6" width="28.4" height="12" rx="2.2"/>
+<path class="tr proc" pathLength="1" d="M-14.2 -1L-24.5 1.2"/>
+</g>
+</g>
+<g class="g-cranio">
+<path class="tr cheio" pathLength="1" style="--d:0.52s" d="M264.2 150.1C248.8 136.3 248.8 93.3 278 84.7C303.8 76.1 331.3 88.2 333 115.7L336.5 126L340.8 134.6L350.2 149.2L337.3 153.5L335.6 163L333 169C334.8 177.6 329.6 187.1 319.3 187.9L300.4 184.5C291.8 181 286.6 174.2 284.9 165.6L283.2 150.1L274.6 153.5Z"/>
+<ellipse class="tr" pathLength="1" style="--d:0.7s" cx="324.4" cy="122.6" rx="6.9" ry="7.7"/>
+<path class="tr fino" pathLength="1" style="--d:0.74s" d="M333 167.3L321 169M312.4 184.5L300.4 177.6"/>
+<path class="tr fino" pathLength="1" style="--d:0.72s" d="M288.3 150.1C288.3 141.5 300.4 141.5 300.4 151.8"/>
+</g>
+<g class="g-braco">
+<path class="tr cheio" pathLength="1" style="--d:0.9s" d="M253.1 209.1L265.6 310.8L276.7 309.3L261.6 208Z"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.9s" cx="257.4" cy="208.6" r="8.6"/>
+<circle class="tr cheio" pathLength="1" style="--d:0.94s" cx="271.1" cy="310" r="7.7"/>
+<path class="tr cheio" pathLength="1" style="--d:0.96s" d="M270.1 315.1L359.9 330.6L361.2 323.9L272.1 305Z"/>
+<path class="tr cheio" pathLength="1" style="--d:1.0s" d="M360.6 322.1L396.7 322.9C412.2 323.8 424.2 329 426.8 335L396.7 337.6L360.6 334.1Z"/>
+<path class="tr fino" pathLength="1" style="--d:0.9s" d="M266 206.8L257.4 208.6"/>
+</g>
+<g class="g-medidas">
+<path class="ref aparece" style="--d:1s" d="M257.4 208.6V52"/>
+<path class="ref aparece" style="--d:1s" d="M295.2 147.5L334.4 84.3"/>
+<path class="tr lm lm-pescoco" pathLength="1" style="--d:1.0s" d="M257.4 208.6L295.2 147.5"/>
+<path class="tr lm lm-tronco" pathLength="1" style="--d:1.05s" d="M219.5 421.8L257.4 208.6"/>
+<path class="tr arco arco-pescoco" pathLength="1" style="--d:1.15s" d="M257.4 62.4A146.2 146.2 0 0 1 334.4 84.3"/>
+<path class="tr arco arco-tronco" pathLength="1" style="--d:1.25s" d="M219.5 327.2A94.6 94.6 0 0 1 236 328.7"/>
+<path class="tr lider" pathLength="1" style="--d:1.3s" d="M236 328.7L284.9 368.5"/>
+<g class="rot rot-pescoco" style="--d:1.35s">
+<text class="rot-nome" x="350.2" y="64.1">pescoço · atenção</text>
+<text class="rot-num" x="350.2" y="114" data-contar="32">32°</text>
+</g>
+<g class="rot rot-tronco" style="--d:1.45s">
+<text class="rot-nome" x="373.8" y="397.8">tronco · adequado</text>
+<text class="rot-num" x="291.8" y="397.8" data-contar="10">10°</text>
+</g>
+<circle class="ponto" style="--d:1.0s" cx="295.2" cy="147.5" r="5"/>
+<circle class="ponto" style="--d:1.0s" cx="257.4" cy="208.6" r="5"/>
+<circle class="ponto" style="--d:1.0s" cx="219.5" cy="421.8" r="5"/>
+</g>
+</svg>
+      </div>
 
-    <!-- Passo 1: dicas e envio da foto -->
-    <section class="cartao" id="secao-envio">
-      <h2>Como tirar a foto</h2>
+      <div class="hero-texto">
+        <h1 id="titulo-hero">Sua postura, medida na sua própria foto.</h1>
+        <p class="hero-sub">Envie uma foto de perfil sentado e veja, em segundos, os ângulos do seu pescoço e da sua coluna, com dicas simples para corrigir.</p>
+        <div class="hero-acoes">
+          <a class="botao botao-pilula botao-grande" href="#analisar">
+            Começar a analisar
+            <svg class="icone" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-baixo"/></svg>
+          </a>
+          <a class="link-texto" href="#como-funciona">Como funciona</a>
+        </div>
+      </div>
+    </section>
 
-      <!-- Dicas em formato de cartões pequenos, com ícone -->
-      <ul class="dicas">
-        <li><span class="dica-icone">📐</span><div><strong>De lado (perfil)</strong><small>Câmera na altura do tronco</small></div></li>
-        <li><span class="dica-icone">🧍</span><div><strong>Cabeça até o quadril</strong><small>Sem objetos na frente</small></div></li>
-        <li><span class="dica-icone">💡</span><div><strong>Boa iluminação</strong><small>Evite contraluz de janela</small></div></li>
-        <li><span class="dica-icone">🪑</span><div><strong>Postura do dia a dia</strong><small>Como você trabalha ou estuda</small></div></li>
+    <!--
+      Por que a postura importa: faixa editorial. Só texto e as faixas reais do
+      método RULA usadas pelo analisador (LIMITES em backend/postura.py).
+    -->
+    <section id="por-que" class="secao secao-por-que" aria-labelledby="titulo-por-que">
+      <div class="pq-topo">
+        <h2 id="titulo-por-que">Por que a postura importa</h2>
+        <div class="pq-texto">
+          <p>Quem passa horas sentado diante do computador mantém o pescoço e as costas na mesma posição por muito tempo. A dor chega aos poucos e, quando se faz notar, já virou rotina.</p>
+          <p>Esse esforço repetido está por trás da LER/DORT (lesões por esforço repetitivo e distúrbios osteomusculares relacionados ao trabalho). A boa notícia é que pequenos ajustes já ajudam.</p>
+        </div>
+      </div>
+
+      <ul class="pq-pontos">
+        <li>
+          <h3>A dor se acumula</h3>
+          <p>Uma cabeça projetada para a frente parece pouca coisa por alguns minutos. Repetida por horas, todos os dias, vira um desconforto que só cresce.</p>
+        </li>
+        <li>
+          <h3>Você não percebe enquanto trabalha</h3>
+          <p>Com a atenção na tela, o corpo escorrega para a posição mais fácil. Quando a dor chama a atenção, o hábito já está formado.</p>
+        </li>
+        <li>
+          <h3>Pequenos ajustes resolvem</h3>
+          <p>Subir a tela, apoiar as costas e levantar de tempos em tempos são mudanças simples que aliviam o pescoço e a coluna.</p>
+        </li>
       </ul>
 
-      <!-- Área clicável que também aceita arrastar e soltar -->
-      <label class="area-upload" id="area-upload" for="campo-foto">
-        <input type="file" id="campo-foto" accept="image/jpeg,image/png,image/webp" hidden>
-        <img id="previa" alt="Prévia da foto escolhida" hidden>
-        <span id="texto-upload" class="texto-upload">
-          <!-- Ícone de câmera -->
-          <svg width="52" height="52" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
-          <strong>Clique para escolher uma foto</strong>
-          <small>ou arraste a imagem para cá · JPG, PNG ou WEBP até 10 MB</small>
-        </span>
-        <!-- Aparece por cima da prévia, para deixar claro que dá para trocar -->
-        <span id="trocar-foto" class="trocar-foto" hidden>Trocar foto</span>
-      </label>
-
-      <button id="botao-analisar" class="botao" disabled>Analisar minha postura</button>
-      <p id="mensagem-erro" class="erro" role="alert" hidden></p>
+      <div class="pq-limites">
+        <div class="pq-limites-texto">
+          <h3>Onde começa o problema</h3>
+          <p>Estes são os limites do método RULA que o Alinha usa. Até eles, a postura é adequada. Acima, o resultado pede atenção.</p>
+        </div>
+        <ul class="pq-numeros">
+          <li>
+            <p class="num-grande"><span class="num-ate">até</span>20°</p>
+            <p class="num-legenda"><svg class="icone" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-ok"/></svg>Pescoço adequado</p>
+          </li>
+          <li>
+            <p class="num-grande"><span class="num-ate">até</span>10°</p>
+            <p class="num-legenda"><svg class="icone" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-ok"/></svg>Tronco adequado</p>
+          </li>
+        </ul>
+      </div>
     </section>
 
-    <!-- Passo 2: resultado (fica escondido até a análise terminar) -->
-    <section class="cartao" id="secao-resultado" hidden>
-      <!-- Faixa com o resumo geral (cor muda conforme a classificação) -->
-      <div id="faixa-geral" class="faixa">
-        <span id="faixa-icone" class="faixa-icone"></span>
+    <!-- Ferramenta: quadro de avaliação + ficha de avaliação -->
+    <section id="analisar" class="analise" data-estado="vazio" aria-labelledby="titulo-analisar">
+      <div class="analise-cab">
+        <h2 id="titulo-analisar">Analise sua postura</h2>
+        <p>Envie uma foto de perfil, sentado, da cabeça ao quadril. A foto é processada na hora e não fica guardada.</p>
+      </div>
+
+      <div class="ferramenta">
+
+      <!-- Quadro: a foto fica sobre uma grade, como no quadro do fisioterapeuta -->
+      <div class="quadro">
+        <div class="quadro-topo">
+          <h3>Quadro de avaliação</h3>
+          <!-- Legenda: só aparece quando existe resultado -->
+          <ul id="quadro-legenda" class="legenda">
+            <li class="leg-pescoco" data-parte="pescoco">Pescoço</li>
+            <li class="leg-tronco" data-parte="tronco">Tronco</li>
+            <li class="leg-referencia">Vertical de referência</li>
+          </ul>
+        </div>
+
+        <div id="quadro-area" class="quadro-area">
+          <!-- Área de envio: clicar abre o seletor, arrastar e soltar também funciona -->
+          <label id="zona-envio" class="zona-envio" for="campo-foto">
+            <input id="campo-foto" type="file" accept="image/jpeg,image/png,image/webp">
+            <!-- Guia: silhueta sentada de perfil, com orelha, ombro e quadril sobre a vertical -->
+            <svg class="guia-silhueta" viewBox="0 0 260 340" aria-hidden="true">
+              <ellipse cx="130" cy="54" rx="30" ry="36"/>
+              <path d="M159 57l7 11-7 2"/>
+              <path d="M108 86C108 104 106 112 104 122C88 128 84 146 86 172C88 212 92 256 96 292C98 312 110 324 128 324L250 324"/>
+              <path d="M250 292L162 292C160 268 160 240 160 214C162 182 170 154 158 128C152 116 148 104 148 88"/>
+              <circle class="guia-ponto" cx="130" cy="56" r="6"/>
+              <circle class="guia-ponto" cx="128" cy="136" r="6"/>
+              <circle class="guia-ponto" cx="130" cy="292" r="6"/>
+            </svg>
+            <!-- Dois textos, trocados só pelo CSS: mouse (arrastar/clicar) e toque (tocar) -->
+            <div class="zona-texto">
+              <strong>
+                <span class="so-mouse">Arraste sua foto para o quadro</span>
+                <span class="so-toque">Toque para escolher a foto</span>
+              </strong>
+              <span class="zona-acao so-mouse">ou clique para escolher</span>
+              <small>JPG, PNG ou WEBP até 10 MB</small>
+            </div>
+          </label>
+
+          <!-- Prévia da foto escolhida (aparece em "pronto" e "analisando") -->
+          <img id="previa" class="previa" alt="Prévia da foto escolhida" hidden>
+
+          <!-- Resultado: a foto já traçada pelo analisador, montada sobre a grade.
+               A linha de revelação só existe durante a animação de entrada. -->
+          <div id="palco" class="palco" hidden>
+            <img id="foto-resultado" alt="Sua foto analisada: esqueleto, pescoço e tronco traçados sobre o quadro de avaliação">
+            <span id="linha-revelacao" class="linha-revelacao" aria-hidden="true" hidden></span>
+          </div>
+
+          <!-- Durante a análise: linha de varredura e aviso -->
+          <div id="analisando" class="analisando" hidden>
+            <span class="linha-varredura" aria-hidden="true"></span>
+            <p>Localizando orelha, ombro e quadril…</p>
+          </div>
+        </div>
+
+        <div class="quadro-rodape">
+          <p id="quadro-nota">Linha de prumo: vertical de referência.</p>
+          <button id="trocar-foto" class="botao-texto" type="button" hidden>
+            <svg class="icone" aria-hidden="true"><use href="#i-trocar"/></svg>
+            Trocar foto
+          </button>
+        </div>
+      </div>
+
+      <!-- Ficha de avaliação: orientações antes da foto, medidas depois -->
+      <aside id="ficha" class="ficha" aria-label="Ficha de avaliação">
+        <div class="ficha-topo">
+          <h3>Ficha de avaliação</h3>
+          <!-- Lado medido (só no resultado) e data de hoje -->
+          <p class="ficha-meta">
+            <span id="ficha-lado"></span>
+            <span id="ficha-data"></span>
+          </p>
+        </div>
+
+        <!-- Antes do resultado: como tirar a foto + botão de analisar -->
+        <div id="ficha-instrucoes" class="ficha-instrucoes">
+          <h4>Como tirar a foto</h4>
+          <ol class="passos-foto">
+            <li>
+              <svg class="icone-passo" aria-hidden="true"><use href="#i-perfil"/></svg>
+              <strong>De lado (perfil)</strong>
+              <span>Câmera na altura do tronco</span>
+            </li>
+            <li>
+              <svg class="icone-passo" aria-hidden="true"><use href="#i-corpo"/></svg>
+              <strong>Da cabeça ao quadril</strong>
+              <span>Sem objetos na frente do corpo</span>
+            </li>
+            <li>
+              <svg class="icone-passo" aria-hidden="true"><use href="#i-luz"/></svg>
+              <strong>Boa iluminação</strong>
+              <span>Evite contraluz de janela</span>
+            </li>
+            <li>
+              <svg class="icone-passo" aria-hidden="true"><use href="#i-cadeira"/></svg>
+              <strong>Postura do dia a dia</strong>
+              <span>Sente como você trabalha ou estuda</span>
+            </li>
+          </ol>
+          <button id="botao-analisar" class="botao" type="button" disabled>Analisar postura</button>
+          <p id="mensagem-erro" class="erro" role="alert" hidden>
+            <svg class="icone" aria-hidden="true"><use href="#i-alerta"/></svg>
+            <span id="mensagem-erro-texto"></span>
+          </p>
+        </div>
+
+        <!-- Depois da análise: veredito, pescoço, tronco, recomendações e ações -->
+        <div id="ficha-resultado" class="ficha-resultado" hidden>
+          <!-- Veredito: uma linha como as outras da ficha (ícone + frase). Recebe foco
+               por script só para anunciar o resultado; não é um controle. -->
+          <div id="linha-geral" class="linha linha-geral" data-classe tabindex="-1" role="group" aria-label="Resultado geral">
+            <p id="geral-valor" class="veredito"></p>
+            <p id="geral-texto"></p>
+          </div>
+
+          <div id="linha-pescoco" class="linha linha-medida" data-parte="pescoco" data-classe>
+            <p class="medida-titulo">
+              <span class="rotulo">Pescoço</span>
+              <span class="subrotulo">ombro → orelha</span>
+              <span id="pescoco-selo" class="selo" data-classe></span>
+            </p>
+            <span id="pescoco-valor" class="valor"></span>
+            <div id="pescoco-regua" class="regua"></div>
+            <p id="pescoco-mensagem" class="mensagem"></p>
+          </div>
+
+          <div id="linha-tronco" class="linha linha-medida" data-parte="tronco" data-classe>
+            <p class="medida-titulo">
+              <span class="rotulo">Tronco</span>
+              <span class="subrotulo">quadril → ombro</span>
+              <span id="tronco-selo" class="selo" data-classe></span>
+            </p>
+            <span id="tronco-valor" class="valor"></span>
+            <div id="tronco-regua" class="regua"></div>
+            <p id="tronco-mensagem" class="mensagem"></p>
+          </div>
+
+          <div class="linha linha-recomendacoes">
+            <span class="rotulo">O que fazer</span>
+            <ul id="lista-recomendacoes" class="recomendacoes"></ul>
+          </div>
+
+          <div class="acoes">
+            <!-- Dica de que há mais conteúdo abaixo (linha no rodapé; só aparece se a ficha rolar e ainda não foi rolada) -->
+            <button id="mais-abaixo" class="mais-abaixo" type="button" tabindex="-1" aria-hidden="true">
+              Role para ver mais
+              <svg class="icone" width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-baixo"/></svg>
+            </button>
+            <button id="botao-nova" class="botao" type="button">Analisar outra foto</button>
+            <a id="baixar-imagem" class="botao-secundario" download="analise-postura.jpg">
+              <svg class="icone" aria-hidden="true"><use href="#i-baixar"/></svg>
+              Baixar imagem anotada
+            </a>
+          </div>
+        </div>
+      </aside>
+      </div>
+    </section>
+
+    <!-- Como funciona: explicação curta do caminho da foto até a classificação -->
+    <section id="como-funciona" class="secao secao-como" aria-labelledby="titulo-como">
+      <h2 id="titulo-como">Como funciona</h2>
+      <p class="intro">A análise é feita em quatro passos, todos sobre a sua própria foto. O resultado mostra o que foi medido, para você conferir com os olhos.</p>
+
+      <ol class="processo">
+        <li>
+          <!-- Passo 1: figura de perfil dentro do enquadramento da câmera -->
+          <svg class="passo-figura" viewBox="0 0 144 96" aria-hidden="true">
+            <path class="d-moldura" d="M14 22V12h10M120 12h10v10M14 74v10h10M130 74v10h-10"/>
+            <circle class="d-corpo" cx="72" cy="22" r="10"/>
+            <path class="d-corpo" d="M66 33L64 74H104M104 74V90"/>
+          </svg>
+          <h3>Foto de perfil</h3>
+          <p>Você envia uma foto sentado(a), de lado.</p>
+        </li>
+        <li>
+          <!-- Passo 2: os pontos do corpo -->
+          <svg class="passo-figura" viewBox="0 0 144 96" aria-hidden="true">
+            <circle class="d-fantasma" cx="72" cy="22" r="10"/>
+            <path class="d-fantasma" d="M66 33L64 74H104M104 74V90"/>
+            <path class="d-corpo" d="M74 22L68 44L65 74"/>
+            <circle class="d-ponto-menor" cx="81" cy="21" r="2.4"/>
+            <circle class="d-ponto-menor" cx="84" cy="25" r="2.4"/>
+            <circle class="d-ponto-menor" cx="82" cy="60" r="2.4"/>
+            <circle class="d-ponto-menor" cx="104" cy="74" r="2.4"/>
+            <circle class="d-ponto-menor" cx="104" cy="90" r="2.4"/>
+            <circle class="d-ponto" cx="74" cy="22" r="4.5"/>
+            <circle class="d-ponto" cx="68" cy="44" r="4.5"/>
+            <circle class="d-ponto" cx="65" cy="74" r="4.5"/>
+          </svg>
+          <h3>Pontos do corpo</h3>
+          <p>O modelo YOLO11-pose localiza 17 pontos, entre eles orelha, ombro e quadril.</p>
+        </li>
+        <li>
+          <!-- Passo 3: vertical de referência e os dois ângulos -->
+          <svg class="passo-figura" viewBox="0 0 144 96" aria-hidden="true">
+            <path class="d-prumo" d="M68 6V90"/>
+            <path class="d-arco" d="M68 26A18 18 0 0 1 79 29.7"/>
+            <path class="d-segmento" d="M66 76L68 44L88 18"/>
+            <circle class="d-ponto" cx="66" cy="76" r="4.5"/>
+            <circle class="d-ponto" cx="68" cy="44" r="4.5"/>
+            <circle class="d-ponto" cx="88" cy="18" r="4.5"/>
+          </svg>
+          <h3>Ângulos</h3>
+          <p>Medimos o ângulo do pescoço (ombro→orelha) e do tronco (quadril→ombro) em relação à vertical.</p>
+        </li>
+        <li>
+          <!-- Passo 4: régua com as três faixas e o marcador -->
+          <svg class="passo-figura" viewBox="0 0 144 96" aria-hidden="true">
+            <defs>
+              <clipPath id="recorte-regua"><rect x="14" y="42" width="116" height="12" rx="6"/></clipPath>
+            </defs>
+            <g clip-path="url(#recorte-regua)">
+              <rect class="d-adequada" x="14" y="42" width="38.7" height="12"/>
+              <rect class="d-atencao" x="52.7" y="42" width="38.6" height="12"/>
+              <rect class="d-inadequada" x="91.3" y="42" width="38.7" height="12"/>
+            </g>
+            <path class="d-marcador" d="M70 36V60"/>
+            <path class="d-marcador-ponta" d="M65.5 28.5h9L70 35z"/>
+          </svg>
+          <h3>Classificação</h3>
+          <p>Comparamos com as faixas do método RULA.</p>
+        </li>
+      </ol>
+
+      <div class="criterios">
+        <div class="criterios-tabela">
+          <table class="tabela-limites">
+            <caption>Faixas usadas na classificação (baseadas no método RULA)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Parte</th>
+                <th scope="col" class="c-adequada"><span><svg class="icone" aria-hidden="true"><use href="#i-ok"/></svg>Adequada</span></th>
+                <th scope="col" class="c-atencao"><span><svg class="icone" aria-hidden="true"><use href="#i-atencao"/></svg>Atenção</span></th>
+                <th scope="col" class="c-inadequada"><span><svg class="icone" aria-hidden="true"><use href="#i-alerta"/></svg>Inadequada</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Pescoço</th>
+                <td>até 20°</td>
+                <td>20° a 40°</td>
+                <td>acima de 40°</td>
+              </tr>
+              <tr>
+                <th scope="row">Tronco</th>
+                <td>até 10°</td>
+                <td>10° a 20°</td>
+                <td>acima de 20°</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="criterios-limites">
+          <h3>Limitações</h3>
+          <ul class="limites">
+            <li>A foto precisa ser de perfil.</li>
+            <li>A medição é em 2D: câmera inclinada distorce os ângulos.</li>
+            <li>Roupas largas, encosto alto ou pouca luz reduzem a precisão.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sobre o projeto: contexto acadêmico e equipe -->
+    <section id="sobre" class="secao secao-sobre" aria-labelledby="titulo-sobre">
+      <div class="sobre-texto">
+        <h2 id="titulo-sobre">Sobre o projeto</h2>
+        <p>O Alinha é um Projeto Extensionista da disciplina de Processamento de Imagens (FSG, 2026/2). Ele une visão computacional e saúde: a partir de uma foto de perfil, mede a posição do pescoço e do tronco e explica o resultado em linguagem simples.</p>
+        <p>Pertence ao Núcleo Saúde e Bem-Estar e se relaciona ao ODS 3 (Saúde e Bem-Estar).</p>
+        <a class="botao-secundario" href="https://github.com/Diego-Massing/analisador-postura">Código no GitHub</a>
+      </div>
+
+      <dl class="dados">
         <div>
-          <strong id="faixa-titulo"></strong>
-          <span id="faixa-texto"></span>
+          <dt>Disciplina</dt>
+          <dd>Processamento de Imagens · FSG, 2026/2</dd>
         </div>
-      </div>
-
-      <div class="resultado-grade">
-        <figure class="figura-resultado">
-          <img id="imagem-resultado" alt="Foto com o esqueleto e os ângulos desenhados">
-          <figcaption>
-            Linhas coloridas: <b>tronco</b> (quadril → ombro) e <b>pescoço</b> (ombro → orelha).
-            A linha tracejada é a vertical ideal.
-          </figcaption>
-          <a id="baixar-imagem" class="link-baixar" download="analise-postura.jpg">⬇ Baixar imagem</a>
-        </figure>
-
-        <div class="indicadores">
-          <!-- Os cartões de pescoço e tronco são preenchidos pelo app.js -->
-          <div id="indicador-pescoco" class="indicador"></div>
-          <div id="indicador-tronco" class="indicador"></div>
+        <div>
+          <dt>Professor</dt>
+          <dd>Vinícius Colombo Sonda</dd>
         </div>
-      </div>
-
-      <div id="bloco-recomendacoes" class="recomendacoes">
-        <h3>O que você pode fazer</h3>
-        <ul id="lista-recomendacoes"></ul>
-      </div>
-
-      <button id="botao-nova" class="botao secundario">Analisar outra foto</button>
+        <div>
+          <dt>Núcleo</dt>
+          <dd>Saúde e Bem-Estar · ODS 3 (Saúde e Bem-Estar)</dd>
+        </div>
+        <div>
+          <dt>Integrantes</dt>
+          <dd>
+            <ul>
+              <li>Mateus Romanzini</li>
+              <li>Diego Massing Schwantes</li>
+              <li>Lorenzo Carniel</li>
+              <li>Heryck Marcante</li>
+            </ul>
+          </dd>
+        </div>
+      </dl>
     </section>
-
-    <p class="aviso">
-      🔒 A foto é processada apenas para gerar o resultado e <strong>não é armazenada</strong>.
-      Esta ferramenta é educativa e preventiva e <strong>não substitui a avaliação de um profissional de saúde</strong>.
-    </p>
   </main>
 
-  <footer>
-    Projeto Extensionista · Processamento de Imagens · FSG 2026/2<br>
-    Detecção de pose com YOLO11 (Ultralytics) · Critérios baseados no método RULA
+  <footer class="rodape">
+    <div class="rodape-marca">
+      <a class="marca" href="#inicio" aria-label="Alinha, voltar ao início">
+        <svg class="marca-icone" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="7" r="3.4" fill="var(--clinica)"/>
+          <path d="M16 12.5v14.5M11 16.5h10M12 21.5h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span>Alinha</span>
+      </a>
+      <p>Analisador de postura sentada</p>
+    </div>
+    <div class="rodape-avisos">
+      <p class="rodape-aviso"><strong>A foto é processada apenas para gerar o resultado e não é armazenada.</strong></p>
+      <p class="rodape-aviso">Ferramenta educativa e preventiva: não substitui a avaliação de um profissional de saúde.</p>
+      <p class="rodape-creditos">Detecção de pose: YOLO11 (Ultralytics) · Critérios: método RULA · FSG 2026/2</p>
+    </div>
   </footer>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

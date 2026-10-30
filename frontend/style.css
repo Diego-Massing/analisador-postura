@@ -1,449 +1,1485 @@
 /*
   style.css
-  Visual do Analisador Ergonômico de Postura.
-  Interface pensada para usuários leigos: letras grandes, cores com significado
-  claro (verde = adequada, laranja = atenção, vermelho = inadequada) e layout
-  que funciona no celular e no computador. Também tem tema escuro automático,
-  que segue a configuração do sistema do usuário.
+  Visual do Alinha, o analisador de postura sentada.
+  A ideia: a foto é colocada sobre o quadro de avaliação do fisioterapeuta
+  (uma grade com linha de prumo) e as medidas aparecem numa ficha clínica ao lado.
+  Tema claro apenas, de propósito: a página é apresentada em projetor e não
+  pode virar escura por causa da configuração do sistema.
+  Ordem do arquivo: base, topo, abertura (hero), "Por que importa", ferramenta
+  (quadro + ficha), botões, "Como funciona", "Sobre", rodapé, telas pequenas.
 */
 
 /* ------------------------------------------------------------------ */
-/* Cores e medidas usadas em toda a página (tema claro)                */
+/* Fonte Figtree, guardada na pasta "fontes" (funciona sem internet)   */
+/* ------------------------------------------------------------------ */
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fontes/figtree-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fontes/figtree-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cores e medidas usadas em toda a página                             */
 /* ------------------------------------------------------------------ */
 :root {
-  --fundo: #f4f7f6;
-  --cartao: #ffffff;
-  --texto: #1c2b2a;
-  --texto-suave: #5b6b69;
-  --primaria: #0f766e;          /* verde-azulado: saúde e calma */
-  --primaria-escura: #0b5d57;
-  --primaria-clara: #e6f4f2;
-  --borda: #dbe4e2;
-  --sombra: 0 1px 2px rgba(16, 40, 38, 0.06), 0 8px 24px rgba(16, 40, 38, 0.06);
-  --raio: 16px;
+  color-scheme: light;
 
-  /* Cores das classificações */
-  --adequada: #2e7d32;
-  --adequada-fundo: #e8f5e9;
-  --atencao: #b45309;
-  --atencao-fundo: #fff4e0;
-  --inadequada: #c62828;
-  --inadequada-fundo: #fdecea;
+  --papel: #FFFFFF;             /* fundo da página */
+  --papel-quadro: #F6F8FA;      /* fundo do quadro, sob a grade */
+  --tinta: #0F1B2D;             /* texto */
+  --tinta-suave: #4A5568;       /* texto secundário */
+  --regua-linha: #E2E8EE;       /* linhas finas de separação */
+  --grade: #D5DEE6;             /* grade: linhas pequenas */
+  --grade-forte: #B8C6D2;       /* grade: a cada 5ª linha */
+
+  --clinica: #0E7C86;           /* única cor de destaque: ações, navegação ativa, foco, prumo */
+  --clinica-escura: #0A5F67;
+  --clinica-fundo: #E8F4F5;
+
+  /* Classificações: sempre acompanhadas de ícone e palavra */
+  --adequada: #1E7B4A;
+  --adequada-fundo: #E6F4EC;
+  --atencao: #B26A00;
+  --atencao-texto: #8F5500;     /* âmbar para texto sobre branco */
+  --atencao-fundo: #FDF1DC;
+  --inadequada: #B42318;
+  --inadequada-fundo: #FDECEA;
+
+  /*
+    Cores dos traços da legenda do quadro. Espelham as cores que o back-end
+    desenha na foto (CORES em backend/postura.py, convertidas de BGR para RGB),
+    e não as cores de texto da ficha, que são mais escuras para dar contraste.
+  */
+  --traco-adequada: #4CAF50;
+  --traco-atencao: #FFA500;
+  --traco-inadequada: #F44336;
+
+  --raio: 6px;
+  --raio-pilula: 999px;         /* só nos botões de chamada (topo e abertura) */
+  --altura-topo: 64px;
+  --margem: clamp(16px, 2.9vw, 40px);   /* margem lateral da página */
+  /* Grade do quadro (24 px, a cada 5ª linha mais forte), reaproveitada na abertura e em "Sobre" */
+  --grade-quadro:
+    linear-gradient(to right, transparent calc(50% - 0.5px), var(--grade-forte) calc(50% - 0.5px), var(--grade-forte) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--grade-forte) calc(50% - 0.5px), var(--grade-forte) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to right, transparent calc(50% - 0.5px), var(--grade) calc(50% - 0.5px), var(--grade) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--grade) calc(50% - 0.5px), var(--grade) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  --fonte: "Figtree", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --suave: cubic-bezier(0.16, 1, 0.3, 1);  /* ease-out exponencial */
 }
 
-/* Tema escuro: só troca os valores das variáveis acima */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fundo: #0f1716;
-    --cartao: #172221;
-    --texto: #e3ecea;
-    --texto-suave: #9bb0ad;
-    --primaria: #2dd4bf;
-    --primaria-escura: #5eead4;
-    --primaria-clara: #133331;
-    --borda: #2a3b39;
-    --sombra: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
-    --adequada: #66bb6a;
-    --adequada-fundo: #17301a;
-    --atencao: #fbbf24;
-    --atencao-fundo: #33270f;
-    --inadequada: #f87171;
-    --inadequada-fundo: #3a1717;
-  }
-}
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+*, *::before, *::after { box-sizing: border-box; }
 
-* { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--altura-topo);
+  accent-color: var(--clinica);
+  scrollbar-color: var(--grade-forte) transparent;
+  scrollbar-width: thin;
+  -webkit-text-size-adjust: 100%;
+}
+/* Em telas grandes (projetor) toda a escala em rem cresce um pouco */
+@media (min-width: 1600px) { html { font-size: 112.5%; } }
 
 body {
   margin: 0;
-  font-family: "Segoe UI", Roboto, system-ui, Arial, sans-serif;
-  font-size: 17px;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--fonte);
+  font-size: 1.0625rem;
   line-height: 1.55;
-  background: var(--fundo);
-  color: var(--texto);
+  caret-color: var(--clinica);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Números sempre com largura fixa (ângulos, datas, faixas, textos com medidas) */
+body, .valor, .regua-escala, #ficha-data, #ficha-lado, .tabela-limites,
+td, time { font-variant-numeric: tabular-nums; }
+
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+h2, h3 { text-wrap: balance; line-height: 1.15; }
+p, li { text-wrap: pretty; }
+
+::selection { background: rgba(14, 124, 134, 0.22); color: var(--tinta); }
+
+a { color: var(--clinica); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a:hover { color: var(--clinica-escura); }
+
+/* Anel de foco visível para quem navega pelo teclado */
+:focus-visible { outline: 2px solid var(--clinica); outline-offset: 2px; }
+
+/* O resultado geral só recebe foco por script (para o leitor de tela anunciar):
+   não é um controle, então nunca mostra anel de foco */
+#linha-geral:focus { outline: none; }
+
+/* Seções recebem foco por script ao seguir um link interno: sem anel, não são controles */
+section[tabindex="-1"]:focus { outline: none; }
+
+[hidden] { display: none !important; }
+
+/* Barra de rolagem discreta (navegadores baseados em WebKit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--grade-forte); border-radius: 6px; border: 2px solid var(--papel); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Texto só para leitores de tela */
+.so-leitor {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Ícones: traço atual, sem preenchimento (os desenhos ficam em <symbol> no HTML) */
+svg.icone, svg.icone-passo {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+/* Tamanho padrão quando o HTML não define width/height (o app.js define os seus) */
+svg.icone:not([width]) { width: 1.25em; height: 1.25em; }
+
+/* Rótulo de campo, como num formulário clínico */
+.rotulo {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
 }
 
 /* ------------------------------------------------------------------ */
-/* Cabeçalho                                                           */
+/* Topo: marca, navegação, chamada                                      */
 /* ------------------------------------------------------------------ */
 .topo {
-  /* Degradê com um "brilho" suave no canto, para dar profundidade */
-  background:
-    radial-gradient(circle at 85% 10%, rgba(255, 255, 255, 0.18), transparent 45%),
-    linear-gradient(135deg, #0f766e, #155e75);
-  color: #fff;
-  padding: 28px 16px 72px;   /* espaço extra embaixo: o conteúdo "sobe" por cima */
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--altura-topo);
+  display: flex;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 0 var(--margem);
+  background: var(--papel);
+  border-bottom: 1px solid var(--grade);
 }
-.topo-conteudo { max-width: 900px; margin: 0 auto; }
 
 .marca {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: 0.02em;
-  margin-bottom: 28px;
-}
-.marca-icone {
-  width: 32px;
-  height: 32px;
-  padding: 4px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.topo h1 { margin: 0 0 10px; font-size: 2.1rem; line-height: 1.2; }
-.topo p { margin: 0; max-width: 620px; opacity: 0.92; font-size: 1.05rem; }
-
-/* ------------------------------------------------------------------ */
-/* Área principal                                                      */
-/* ------------------------------------------------------------------ */
-main {
-  max-width: 900px;
-  margin: -48px auto 0;   /* sobe por cima do cabeçalho */
-  padding: 0 16px 24px;
-}
-
-/* Barra de etapas (1 Foto · 2 Análise · 3 Resultado) */
-.etapas {
-  display: flex;
-  gap: 8px;
-  list-style: none;
-  margin: 0 0 16px;
-  padding: 6px;
-  background: var(--cartao);
-  border-radius: 999px;
-  box-shadow: var(--sombra);
-}
-.etapas li {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 4px;
-  border-radius: 999px;
-  color: var(--texto-suave);
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: background 0.3s, color 0.3s;
-}
-.etapas li span {
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid currentColor;
-  font-size: 0.8rem;
-}
-.etapas li.ativa { background: var(--primaria); color: #fff; }
-.etapas li.feita { color: var(--primaria); }
-
-/* Cartões que agrupam cada passo */
-.cartao {
-  background: var(--cartao);
-  border-radius: var(--raio);
-  padding: 28px;
-  margin-bottom: 20px;
-  box-shadow: var(--sombra);
-  animation: surgir 0.35s ease-out;
-}
-.cartao h2 { margin: 0 0 16px; font-size: 1.3rem; }
-
-@keyframes surgir {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
-
-/* ------------------------------------------------------------------ */
-/* Dicas de como tirar a foto                                          */
-/* ------------------------------------------------------------------ */
-.dicas {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+  color: var(--tinta);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
 }
-.dicas li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--fundo);
-}
-.dicas strong { display: block; font-size: 0.98rem; }
-.dicas small { color: var(--texto-suave); }
-.dica-icone {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: var(--primaria-clara);
-  font-size: 1.3rem;
-}
+.marca:hover { color: var(--tinta); }
+.marca-icone { display: block; color: var(--tinta); }
 
-/* ------------------------------------------------------------------ */
-/* Área de envio da foto                                               */
-/* ------------------------------------------------------------------ */
-.area-upload {
+.navegacao { display: flex; align-self: stretch; gap: 2px; margin-left: 12px; }
+.navegacao a {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 240px;
-  margin: 20px 0;
-  padding: 16px;
-  border: 2px dashed var(--borda);
-  border-radius: var(--raio);
-  text-align: center;
-  color: var(--texto-suave);
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  padding: 0 14px;
+  color: var(--tinta-suave);
+  font-size: 0.9688rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 150ms ease-out;
 }
-.area-upload:hover,
-.area-upload.arrastando { border-color: var(--primaria); background: var(--primaria-clara); }
-.area-upload img { max-width: 100%; max-height: 380px; border-radius: 10px; }
-
-.texto-upload { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.texto-upload svg { width: 52px; height: 52px; color: var(--primaria); margin-bottom: 6px; }
-.texto-upload strong { color: var(--texto); font-size: 1.1rem; }
-
-/* Selo "Trocar foto" sobre a prévia */
-.trocar-foto {
+.navegacao a:hover { color: var(--tinta); }
+/* Link da seção em vista: teal e uma marca fina na base da barra */
+.navegacao a.ativo { color: var(--clinica); font-weight: 600; }
+.navegacao a.ativo::after {
+  content: "";
   position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-size: 0.9rem;
+  left: 14px; right: 14px; bottom: -1px;
+  height: 2px;
+  background: var(--clinica);
 }
+
+/* ------------------------------------------------------------------ */
+/* Abertura: a primeira tela inteira                                    */
+/* ------------------------------------------------------------------ */
+/*
+  A grade do quadro vira o fundo da tela toda. O esqueleto sentado fica à direita
+  (em telas largas) e o título grande ancora o canto inferior esquerdo. Em telas
+  menores tudo se empilha: figura em cima, texto embaixo.
+*/
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--altura-topo));
+  min-height: calc(100svh - var(--altura-topo));
+  overflow: hidden;
+  background-color: var(--papel-quadro);
+  background-image: var(--grade-quadro);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-position: center;
+  border-bottom: 1px solid var(--grade);
+}
+
+.hero-figura {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 220px;
+}
+.hero-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-texto {
+  position: relative;
+  padding: 0 var(--margem) 40px;
+}
+.hero h1 {
+  max-width: 8.4em;
+  font-size: clamp(2.5rem, 5.8vw, 6rem);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.hero-sub {
+  max-width: 34em;
+  margin-top: clamp(14px, 2.2vh, 24px);
+  font-size: clamp(1rem, 1.25vw, 1.3125rem);
+  line-height: 1.5;
+  color: var(--tinta-suave);
+}
+.hero-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  margin-top: clamp(18px, 3vh, 32px);
+}
+.link-texto {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.28em;
+  text-decoration-thickness: 1px;
+}
+
+/* --- O desenho: esqueleto sentado, de perfil, com as duas medidas --- */
+.hero-svg .tr {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero-svg .cheio { fill: var(--papel); }
+.hero-svg .fino { stroke-width: 1.25; }
+.hero-svg .proc { stroke-width: 1.5; }
+.hero-svg .costela { stroke-width: 1.5; }
+.hero-svg .canal { stroke: var(--tinta-suave); stroke-width: 1; }
+.hero-svg .g-mov .tr { stroke: var(--tinta-suave); fill: var(--papel); }
+.hero-svg .g-mov .lin-chao { fill: none; stroke: var(--grade-forte); stroke-width: 2; }
+.hero-svg .g-mov path.tr { fill: none; }
+.hero-svg .prumo-linha { stroke: rgba(15, 27, 45, 0.35); stroke-width: 1; fill: none; }
+.hero-svg .bob { fill: var(--clinica); stroke: var(--papel); stroke-width: 2; }
+.hero-svg .ref { fill: none; stroke: var(--tinta); stroke-width: 1.25; stroke-dasharray: 6 6; }
+.hero-svg .lm { stroke-width: 3.5; fill: none; }
+.hero-svg .lm-pescoco, .hero-svg .arco-pescoco { stroke: var(--atencao); }
+.hero-svg .lm-tronco, .hero-svg .arco-tronco { stroke: var(--clinica); }
+.hero-svg .arco { stroke-width: 3; fill: none; }
+.hero-svg .lider { stroke: var(--clinica); stroke-width: 1; }
+.hero-svg .ponto { fill: var(--papel); stroke: var(--tinta); stroke-width: 2.25; }
+.rot-num {
+  font-family: var(--fonte);
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.rot-pescoco .rot-num { fill: var(--atencao-texto); }
+.rot-tronco .rot-num { fill: var(--clinica-escura); }
+.rot-nome {
+  font-family: var(--fonte);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: var(--tinta-suave);
+}
+
+/*
+  Movimento assinatura da abertura, uma vez só, em menos de 2 s: o prumo cai, a
+  coluna e os ossos se desenham, os dois arcos abrem e os graus contam (o app.js
+  conta os números). Cada peça espera o seu --d. O estado final é o desenho acima:
+  sem animação (movimento reduzido) nada muda de lugar.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  .hero-svg .tr { animation: tracar 0.8s var(--suave) var(--d, 0s) backwards; }
+  .hero-svg .prumo-linha { animation-duration: 1s; }
+  .hero-svg .lm { animation-duration: 0.5s; }
+  .hero-svg .arco, .hero-svg .lider { animation-duration: 0.6s; }
+  .hero-svg .bob { animation: peso-cai-hero 0.9s var(--suave) backwards; }
+  .hero-svg .aparece, .hero-svg .ponto, .hero-svg .rot { animation: aparecer 0.4s ease-out var(--d, 0s) backwards; }
+}
+@keyframes tracar {
+  from { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: butt; fill-opacity: 0; }
+  to   { stroke-dasharray: 1; stroke-dashoffset: 0; stroke-linecap: butt; fill-opacity: 1; }
+}
+@keyframes aparecer { from { opacity: 0; } }
+@keyframes peso-cai-hero { from { transform: translateY(-40px); opacity: 0; } }
+
+/* ------------------------------------------------------------------ */
+/* Por que a postura importa                                            */
+/* ------------------------------------------------------------------ */
+.secao-por-que { background: var(--papel); border-top: 0; }
+.pq-topo {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 32px clamp(32px, 6vw, 112px);
+  align-items: end;
+}
+.pq-topo h2 { font-size: clamp(2.5rem, 6.2vw, 5.5rem); max-width: 9em; line-height: 1; }
+.pq-texto { display: grid; gap: 16px; }
+.pq-texto p { max-width: 58ch; font-size: 1.125rem; color: var(--tinta-suave); }
+.pq-texto p:first-child { color: var(--tinta); }
+
+.pq-pontos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px clamp(24px, 3.4vw, 64px);
+  margin: clamp(56px, 10vh, 112px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.pq-pontos li { padding-top: 20px; border-top: 1px solid var(--grade-forte); }
+.pq-pontos h3 { font-size: clamp(1.375rem, 1.9vw, 1.875rem); letter-spacing: -0.015em; max-width: 14em; }
+.pq-pontos p { max-width: 36ch; margin-top: 12px; color: var(--tinta-suave); }
+
+.pq-limites {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 40px clamp(32px, 6vw, 112px);
+  align-items: end;
+  margin-top: clamp(64px, 12vh, 128px);
+  padding-top: clamp(32px, 5vh, 56px);
+  border-top: 1px solid var(--grade-forte);
+}
+.pq-limites-texto p { max-width: 40ch; margin-top: 12px; color: var(--tinta-suave); }
+.pq-numeros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pq-numeros li { padding-left: clamp(16px, 2.4vw, 40px); border-left: 1px solid var(--grade-forte); }
+.num-grande {
+  font-size: clamp(3.5rem, 8.4vw, 6rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.num-ate {
+  margin-right: 0.2em;
+  font-size: 0.26em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tinta-suave);
+}
+.num-legenda {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: var(--adequada);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ */
+/* Ferramenta: quadro (esquerda) + ficha (direita)                     */
+/* ------------------------------------------------------------------ */
+/*
+  A seção da ferramenta vai de ponta a ponta (sem caixa centralizada) e, ao ser
+  alcançada pelo botão "Começar a analisar", cabe inteira abaixo da barra do topo:
+  um cabeçalho compacto e, embaixo, quadro + ficha.
+*/
+.analise {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--altura-topo));
+  height: calc(100svh - var(--altura-topo));
+  min-height: 600px;
+  padding: 0 var(--margem) 24px;
+  background: var(--papel);
+  border-top: 1px solid var(--grade);
+}
+.analise-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 24px;
+  padding: 16px 0 10px;
+}
+.analise-cab h2 {
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.analise-cab p { font-size: 0.9375rem; color: var(--tinta-suave); }
+@media (min-height: 900px) { .analise-cab { padding-top: 22px; padding-bottom: 14px; } }
+
+.ferramenta {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  /* O quadro cresce; a ficha fica com 2/5 da largura, no máximo 720 px */
+  grid-template-columns: minmax(0, 1fr) minmax(0, min(40%, 720px));
+  gap: 32px;
+}
+
+/* --- Quadro --- */
+.quadro { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+.quadro-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 2.25rem;
+  padding-bottom: 12px;
+}
+.quadro-topo h3 { font-size: 1.25rem; font-weight: 700; }
+
+/*
+  Legenda: só no resultado. Cada amostra imita um traço da foto analisada:
+  pescoço e tronco levam a cor da classificação, a vertical é tracejada.
+*/
+.legenda {
+  display: none;
+  gap: 8px 20px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9375rem;
+  color: var(--tinta-suave);
+}
+[data-estado="resultado"] .legenda { display: flex; }
+.legenda li { display: inline-flex; align-items: center; gap: 8px; }
+.legenda li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 22px; height: 7px;
+  border: 1px solid var(--tinta);   /* contorno: as cores vivas ainda se leem sobre o branco */
+  border-radius: 4px;
+  background: var(--cor-seg, var(--tinta-suave));
+}
+.legenda .leg-pescoco::before { transform: rotate(-35deg); }
+.legenda .leg-tronco::before { transform: rotate(-80deg); width: 16px; }
+/* Vertical de referência: traços curtos empilhados (sem borda, só fundo) */
+.legenda .leg-referencia::before {
+  width: 2px; height: 22px;
+  margin-inline: 10px;
+  border: 0;
+  border-radius: 0;
+  background: repeating-linear-gradient(to bottom, var(--tinta) 0 4px, transparent 4px 7px);
+}
+.legenda li[data-classe="adequada"] { --cor-seg: var(--traco-adequada); }
+.legenda li[data-classe="atencao"] { --cor-seg: var(--traco-atencao); }
+.legenda li[data-classe="inadequada"] { --cor-seg: var(--traco-inadequada); }
+
+/*
+  Área da grade: quadrados de 24 px; a cada 5ª linha (120 px) a linha é mais forte.
+  Cada linha da grade fica no meio da sua célula e a grade é centralizada,
+  assim uma linha cai exatamente no centro, onde passa o prumo.
+*/
+.quadro-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--grade-forte);
+  border-radius: var(--raio);
+  background-color: var(--papel-quadro);
+  background-image:
+    linear-gradient(to right, transparent calc(50% - 0.5px), var(--grade-forte) calc(50% - 0.5px), var(--grade-forte) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--grade-forte) calc(50% - 0.5px), var(--grade-forte) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to right, transparent calc(50% - 0.5px), var(--grade) calc(50% - 0.5px), var(--grade) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--grade) calc(50% - 0.5px), var(--grade) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-position: center;
+}
+
+/* Linha de prumo fixa no centro do quadro, com o "peso" teal no topo */
+.quadro-area::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: rgba(15, 27, 45, 0.35);
+}
+.quadro-area::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%; top: 0;
+  width: 16px; height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--clinica);
+  border: 2px solid var(--papel);
+}
+
+/*
+  Movimento assinatura: quando o resultado aparece, o peso do prumo cai de cima
+  do quadro e a linha desce junto, em sincronia com a revelação da foto
+  (700 ms, a mesma DURACAO_REVELACAO do app.js). O resultado final é o desenho
+  estático acima; sem animação (movimento reduzido) nada muda de lugar.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  [data-estado="resultado"] .quadro-area::before {
+    transform-origin: top;
+    animation: prumo-desce 700ms var(--suave) backwards;
+  }
+  [data-estado="resultado"] .quadro-area::after {
+    animation: peso-cai 700ms var(--suave) backwards;
+  }
+}
+@keyframes prumo-desce { from { transform: scaleY(0); } }
+@keyframes peso-cai { from { transform: translateY(-28px); } }
+
+/* Arrastando uma foto por cima do quadro (vale em qualquer estado) */
+.quadro-area.arrastando,
+.zona-envio.arrastando {
+  outline: 2px dashed var(--clinica);
+  outline-offset: -10px;
+}
+.quadro-area.arrastando::selection { background: transparent; }
+.quadro-area.arrastando > .zona-envio::before { opacity: 1; }
+.zona-envio::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 124, 134, 0.10);
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  pointer-events: none;
+}
+.zona-envio.arrastando::before { opacity: 1; }
+
+/* --- Área de envio (estado vazio) --- */
+.zona-envio {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vh, 20px);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+}
+/* O campo de arquivo fica escondido, mas continua acessível pelo teclado */
+.zona-envio input {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.zona-envio:has(input:focus-visible) { outline: 2px solid var(--clinica); outline-offset: -6px; }
+
+/* Silhueta pontilhada: onde a cabeça, o ombro e o quadril devem ficar sobre a vertical */
+.guia-silhueta {
+  position: relative;
+  height: clamp(150px, 38vh, 340px);
+  width: auto;
+  max-width: 100%;
+  fill: none;
+  stroke: var(--tinta-suave);
+  stroke-width: 2.6px;
+  stroke-dasharray: 0.1 5.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.guia-silhueta * { vector-effect: non-scaling-stroke; }
+.guia-silhueta .guia-ponto {
+  fill: var(--papel-quadro);
+  stroke: var(--tinta);
+  stroke-width: 2px;
+  stroke-dasharray: none;
+}
+
+/* Etiqueta com as instruções, sobre a grade */
+.zona-texto {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 14px 24px;
+  background: var(--papel);
+  border: 1px solid var(--grade-forte);
+  border-radius: var(--raio);
+}
+.zona-texto strong { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.005em; }
+.zona-texto .zona-acao { color: var(--clinica); font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+/* Texto de toque só em telas de toque; texto de mouse só nas demais (sem JS) */
+.so-toque { display: none; }
+@media (pointer: coarse) {
+  .so-mouse { display: none; }
+  .so-toque { display: inline; }
+}
+.zona-texto small { font-size: 0.9375rem; color: var(--tinta-suave); }
+.zona-envio:hover .zona-texto { border-color: var(--clinica); }
+
+/* --- Prévia, resultado e análise --- */
+.previa {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: auto;
+  width: auto; height: auto;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  object-fit: contain;
+  outline: 1px solid var(--grade-forte);
+  background: var(--papel);
+}
+
+/*
+  Resultado: a foto já traçada pelo analisador, presa ao quadro como uma
+  foto (moldura branca fina). Fica centrada com folga em cima e embaixo,
+  para a grade e o peso do prumo continuarem visíveis ao redor.
+  A proporção é a da própria imagem: max-width e max-height só reduzem.
+*/
+.palco {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 24px;
+  pointer-events: none;
+}
+.palco img {
+  display: block;
+  width: auto; height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border: 6px solid #fff;
+  outline: 1px solid var(--grade-forte);
+  background: #fff;
+}
+
+/* Linha teal que acompanha a borda inferior durante a revelação (o app.js a posiciona) */
+.linha-revelacao {
+  position: absolute;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--clinica);
+}
+
+/* Varredura: uma linha teal desce pelo quadro enquanto o modelo procura os pontos */
+.analisando {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+.linha-varredura {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 2px;
+  background: var(--clinica);
+  animation: varrer 1.8s ease-in-out infinite alternate;
+}
+.linha-varredura::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 2px;
+  height: 36px;
+  background: rgba(14, 124, 134, 0.12);
+}
+@keyframes varrer { from { top: 0; } to { top: calc(100% - 2px); } }
+.analisando p {
+  position: absolute;
+  left: 50%; bottom: 20px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  background: var(--papel);
+  border: 1px solid var(--grade-forte);
+  border-radius: var(--raio);
+  font-weight: 600;
+  text-align: center;
+}
+
+/*
+  Quem aparece em cada estado. O app.js também liga e desliga o atributo hidden;
+  estas regras garantem que os dois fiquem de acordo.
+*/
+[data-estado="pronto"] .zona-envio,
+[data-estado="analisando"] .zona-envio { pointer-events: none; }
+[data-estado="pronto"] .zona-envio > :not(input),
+[data-estado="analisando"] .zona-envio > :not(input) { visibility: hidden; }
+[data-estado="resultado"] .zona-envio { display: none; }
+[data-estado="vazio"] .previa,
+[data-estado="resultado"] .previa { display: none; }
+[data-estado="vazio"] .palco,
+[data-estado="pronto"] .palco,
+[data-estado="analisando"] .palco { display: none; }
+[data-estado="vazio"] .analisando,
+[data-estado="pronto"] .analisando,
+[data-estado="resultado"] .analisando { display: none; }
+[data-estado="resultado"] #ficha-instrucoes,
+[data-estado="vazio"] #ficha-resultado,
+[data-estado="pronto"] #ficha-resultado,
+[data-estado="analisando"] #ficha-resultado { display: none; }
+
+/* Rodapé do quadro: nota da linha de prumo e botão de trocar a foto */
+.quadro-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 2.75rem;
+  padding-top: 10px;
+}
+.quadro-rodape p { font-size: 0.9375rem; color: var(--tinta-suave); max-width: 62ch; }
+
+/* --- Ficha de avaliação --- */
+.ficha {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--papel);
+  border: 1px solid var(--grade-forte);
+  border-radius: var(--raio);
+}
+
+.ficha-topo {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 18px 24px 14px;
+  background: var(--papel);
+  border-bottom: 1px solid var(--regua-linha);
+}
+.ficha-topo h3 { font-size: 1.5rem; font-weight: 700; white-space: nowrap; }
+/* Lado medido e data, lado a lado (abaixo do título em telas estreitas) */
+.ficha-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px 12px;
+  margin-left: auto;
+  font-size: 0.875rem;
+  color: var(--tinta-suave);
+}
+#ficha-lado, #ficha-data { white-space: nowrap; }
+#ficha-lado { color: var(--tinta); font-weight: 600; }
+#ficha-data::before {
+  content: "Data  ";
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+}
+#ficha-lado:empty, #ficha-data:empty { display: none; }
+
+/* Antes do resultado: passos da foto */
+.ficha-instrucoes {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 24px;
+}
+.ficha-instrucoes h4 { font-size: 1.25rem; font-weight: 700; }
+
+.passos-foto {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 24px;
+}
+.passos-foto li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  column-gap: 16px;
+  align-items: center;
+  padding: clamp(10px, 1.8vh, 18px) 0;
+  border-bottom: 1px solid var(--regua-linha);
+}
+.passos-foto li:last-child { border-bottom: 0; }
+.icone-passo {
+  grid-row: 1 / 3;
+  width: 44px; height: 44px;
+  padding: 8px;
+  color: var(--tinta);
+  background: var(--papel-quadro);
+  border: 1px solid var(--grade);
+  border-radius: var(--raio);
+}
+.passos-foto strong { font-size: 1.1875rem; font-weight: 650; line-height: 1.25; align-self: end; }
+.passos-foto span { color: var(--tinta-suave); line-height: 1.35; align-self: start; }
+
+.ficha-instrucoes .botao { margin-top: auto; width: 100%; }
+
+.erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--inadequada-fundo);
+  color: var(--inadequada);
+  border-radius: var(--raio);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.erro svg { margin-top: 2px; }
+.erro svg:not([width]) { width: 20px; height: 20px; }
+
+/* Depois do resultado */
+.ficha-resultado {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+}
+
+.linha { padding: 12px 0; border-top: 1px solid var(--regua-linha); }
+
+/*
+  Veredito: uma linha da ficha como as outras (ícone com a cor da classificação
+  e a frase, sem caixa colorida). A primeira linha não repete o fio do cabeçalho.
+*/
+.linha-geral { padding-top: 14px; border-top: 0; }
+.veredito {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.veredito svg { margin-top: 0.05em; }
+#geral-texto { margin: 2px 0 0; font-size: 0.9375rem; color: var(--tinta-suave); }
+.linha-geral[data-classe="adequada"] .veredito { color: var(--adequada); }
+.linha-geral[data-classe="atencao"] .veredito { color: var(--atencao-texto); }
+.linha-geral[data-classe="inadequada"] .veredito { color: var(--inadequada); }
+
+/* Linha de medida: nome, lado e selo numa linha; valor grande à direita; régua embaixo */
+.linha-medida {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+}
+.medida-titulo {
+  grid-column: 1; grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.subrotulo { font-size: 0.9375rem; color: var(--tinta-suave); }
+.valor {
+  grid-column: 2; grid-row: 1;
+  font-size: clamp(2.25rem, 5.6vh, 3.25rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+}
+.linha[data-classe="adequada"] .valor { color: var(--adequada); }
+.linha[data-classe="atencao"] .valor { color: var(--atencao-texto); }
+.linha[data-classe="inadequada"] .valor { color: var(--inadequada); }
+
+.regua { grid-column: 1 / -1; grid-row: 2; position: relative; margin-top: 4px; padding-top: 12px; }
+.mensagem { grid-column: 1 / -1; margin-top: 6px; font-size: 0.9375rem; line-height: 1.4; }
+.mensagem:empty { display: none; }
+
+/* Selo: classificação em palavra + ícone */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--raio);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  background: var(--papel-quadro);
+  color: var(--tinta-suave);
+}
+.selo[data-classe="adequada"] { background: var(--adequada-fundo); color: var(--adequada); }
+.selo[data-classe="atencao"] { background: var(--atencao-fundo); color: var(--atencao-texto); }
+.selo[data-classe="inadequada"] { background: var(--inadequada-fundo); color: var(--inadequada); }
+.selo:empty { display: none; }
+
+/* Régua de faixas com marcador (o app.js monta o conteúdo) */
+.regua-faixas {
+  display: flex;
+  height: 10px;
+  border-radius: var(--raio);
+  overflow: hidden;
+}
+.faixa { display: block; height: 100%; }
+.f-adequada { background: var(--adequada); }
+.f-atencao { background: var(--atencao); }
+.f-inadequada { background: var(--inadequada); }
+
+.regua-marcador {
+  position: absolute;
+  top: 6px;
+  width: 4px; height: 22px;
+  margin-left: -2px;
+  background: var(--tinta);
+  border: 1px solid var(--papel);
+}
+/* Ponta triangular do marcador, recortada com clip-path */
+.regua-marcador::before {
+  content: "";
+  position: absolute;
+  top: -8px; left: 50%;
+  width: 12px; height: 7px;
+  margin-left: -6px;
+  background: var(--tinta);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* Marca do limite "ideal": risco que cruza a régua, com o rótulo na escala logo abaixo */
+.regua-limite {
+  position: absolute;
+  top: 8px;
+  width: 2px; height: 18px;
+  margin-left: -1px;
+  background: var(--tinta);
+}
+
+/* Escala: o 0° fica rente à borda esquerda; os demais rótulos se centram na marca */
+.regua-escala { position: relative; height: 22px; margin-top: 6px; font-size: 0.8125rem; color: var(--tinta-suave); }
+.regua-escala span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding-top: 5px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.regua-escala span::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 50%;
+  width: 1px; height: 4px;
+  background: var(--tinta-suave);
+}
+.regua-escala span:first-child { transform: none; }
+.regua-escala span:first-child::before { left: 0; }
+.regua-escala .e-ideal { color: var(--tinta); font-weight: 600; }
+.regua-escala .e-ideal::before { width: 2px; height: 5px; margin-left: -1px; background: var(--tinta); }
+
+/* Recomendações */
+.linha-recomendacoes .rotulo { display: block; margin-bottom: 8px; }
+.recomendacoes { list-style: none; padding: 0; display: grid; gap: 8px; }
+.recomendacoes li { display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+.recomendacoes svg { margin-top: 0.1em; color: var(--tinta); }
+
+/* Ações no pé da ficha: ficam à vista mesmo quando a ficha rola */
+.acoes {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 16px;
+  background: var(--papel);
+  border-top: 1px solid var(--regua-linha);
+}
+.acoes .botao, .acoes .botao-secundario { padding-left: 18px; padding-right: 18px; font-size: 1rem; }
+
+/*
+  Pista de rolagem: se a ficha tem mais conteúdo do que cabe, uma linha discreta
+  "Role para ver mais" aparece no próprio rodapé, acima dos botões. Ela fica no
+  fluxo (nunca cobre texto) e some depois da primeira rolagem. O app.js liga
+  as classes tem-mais e dica-mais na .ficha.
+*/
+.mais-abaixo {
+  display: none;
+  flex: 1 1 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  margin: -4px 0 -2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--clinica);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ficha.dica-mais .mais-abaixo { display: inline-flex; }
 
 /* ------------------------------------------------------------------ */
 /* Botões                                                              */
 /* ------------------------------------------------------------------ */
-.botao {
-  display: flex;
+.botao, .botao-secundario, .botao-texto {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: 16px;
+  gap: 8px;
   font: inherit;
-  font-size: 1.1rem;
   font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  background: var(--primaria);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-.botao:hover:not(:disabled) { background: var(--primaria-escura); }
-.botao:active:not(:disabled) { transform: scale(0.99); }
-.botao:disabled { background: var(--borda); color: var(--texto-suave); cursor: not-allowed; }
-.botao.secundario {
-  background: transparent;
-  color: var(--primaria);
-  border: 2px solid var(--primaria);
-  margin-top: 24px;
-}
-.botao.secundario:hover { background: var(--primaria-clara); }
-/* No tema escuro a cor primária é clara, então o texto sobre ela fica escuro */
-@media (prefers-color-scheme: dark) {
-  .botao,
-  .etapas li.ativa { color: #0f1716; }
-}
-
-/* Contorno visível para quem navega pelo teclado (acessibilidade) */
-.botao:focus-visible,
-.area-upload:focus-within { outline: 3px solid var(--primaria); outline-offset: 3px; }
-
-.erro {
-  margin: 16px 0 0;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: var(--inadequada-fundo);
-  color: var(--inadequada);
-}
-
-/* Animação de "girando" do botão enquanto analisa */
-.carregando::after {
-  content: "";
-  width: 18px;
-  height: 18px;
-  margin-left: 12px;
-  border: 3px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: girar 0.8s linear infinite;
-}
-@keyframes girar { to { transform: rotate(360deg); } }
-
-/* ------------------------------------------------------------------ */
-/* Resultado                                                           */
-/* ------------------------------------------------------------------ */
-
-/* Faixa com o resumo geral */
-.faixa {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 20px;
-  border-radius: 14px;
-  margin-bottom: 24px;
-}
-.faixa strong { display: block; font-size: 1.25rem; }
-.faixa span { color: var(--texto); }
-.faixa-icone { font-size: 2.2rem; line-height: 1; }
-
-/* Imagem + indicadores lado a lado (empilham no celular) */
-.resultado-grade {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 24px;
-  align-items: start;
-}
-.figura-resultado { margin: 0; }
-.figura-resultado img { width: 100%; border-radius: 12px; display: block; }
-.figura-resultado figcaption { font-size: 0.85rem; color: var(--texto-suave); margin-top: 8px; }
-.link-baixar {
-  display: inline-block;
-  margin-top: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--primaria);
+  line-height: 1.2;
   text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
 }
-.link-baixar:hover { text-decoration: underline; }
 
-/* Cartão de cada parte do corpo (pescoço / tronco) */
-.indicador {
-  border: 1px solid var(--borda);
-  border-radius: 14px;
-  padding: 16px 18px;
-  margin-bottom: 14px;
+.botao {
+  min-height: 52px;
+  padding: 12px 24px;
+  border: 1px solid var(--clinica);
+  border-radius: var(--raio);
+  background: var(--clinica);
+  color: #fff;
+  font-size: 1.0625rem;
 }
-.indicador-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.indicador h4 { margin: 0; font-size: 1rem; }
-.indicador .valor { font-size: 2.4rem; font-weight: 700; line-height: 1.1; margin: 6px 0 2px; }
-.indicador .valor small { font-size: 1rem; font-weight: 500; color: var(--texto-suave); }
-.indicador p { margin: 10px 0 0; }
+.botao:hover:not(:disabled) { background: var(--clinica-escura); border-color: var(--clinica-escura); color: #fff; }
+.botao:active:not(:disabled) { background: var(--clinica-escura); }
+.botao:disabled {
+  background: var(--regua-linha);
+  border-color: var(--regua-linha);
+  color: #5A6575;
+  cursor: not-allowed;
+}
+.botao[aria-busy="true"] { cursor: progress; }
 
-/* Selo colorido com a classificação */
-.selo {
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
+/* Chamadas da página (topo e abertura): o botão primário em forma de pílula */
+.botao-pilula { border-radius: var(--raio-pilula); }
+.botao-topo {
+  margin-left: auto;
+  min-height: 40px;
+  padding: 0 20px;
+  font-size: 0.9375rem;
   white-space: nowrap;
 }
+.botao-grande { min-height: 56px; padding: 0 32px; gap: 10px; }
 
-/*
-  Régua de ângulos: uma barra dividida em três faixas (verde, laranja e
-  vermelho) com um marcador na posição do ângulo medido. As larguras das
-  faixas e a posição do marcador são definidas pelo app.js.
-*/
-.regua { margin-top: 12px; }
-.regua-barra {
-  position: relative;
-  display: flex;
-  height: 10px;
-  border-radius: 999px;
-  overflow: visible;
+.botao-secundario {
+  min-height: 52px;
+  padding: 12px 22px;
+  border: 1px solid var(--clinica);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--clinica);
+  font-size: 1.0625rem;
 }
-.regua-barra > div:nth-child(1) { background: var(--adequada); border-radius: 999px 0 0 999px; }
-.regua-barra > div:nth-child(2) { background: var(--atencao); }
-.regua-barra > div:nth-child(3) { background: var(--inadequada); border-radius: 0 999px 999px 0; }
-.regua-marcador {
-  position: absolute;
-  top: 50%;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--cartao);
-  border: 4px solid var(--texto);
-  transform: translate(-50%, -50%);
-  transition: left 0.6s ease-out;
-}
-.regua-legenda {
-  position: relative;
-  height: 18px;
-  margin-top: 6px;
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-}
-.regua-legenda span { position: absolute; transform: translateX(-50%); }
-.regua-legenda span:first-child { transform: none; }
+.botao-secundario:hover { background: var(--clinica-fundo); color: var(--clinica-escura); border-color: var(--clinica-escura); }
 
-/* Cores por classificação (aplicadas na faixa e nos selos) */
-.adequada { background: var(--adequada-fundo); color: var(--adequada); }
-.atencao { background: var(--atencao-fundo); color: var(--atencao); }
-.inadequada { background: var(--inadequada-fundo); color: var(--inadequada); }
-
-/* Lista de recomendações em forma de "checklist" */
-.recomendacoes h3 { margin: 28px 0 12px; }
-#lista-recomendacoes { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-#lista-recomendacoes li {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--fundo);
+.botao-texto {
+  min-height: 44px;
+  padding: 8px 12px;
+  margin-right: -12px;
+  border: 0;
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--clinica);
+  font-size: 1rem;
 }
-#lista-recomendacoes li::before {
-  content: "✓";
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--primaria);
-  color: var(--cartao);
-  font-size: 0.8rem;
+.botao-texto:hover { background: var(--clinica-fundo); color: var(--clinica-escura); }
+
+/* ------------------------------------------------------------------ */
+/* Faixas de ponta a ponta: "Por que importa", "Como funciona", "Sobre"   */
+/* ------------------------------------------------------------------ */
+.secao {
+  padding-block: clamp(64px, 12vh, 136px);
+  padding-inline: var(--margem);
+  border-top: 1px solid var(--grade);
+}
+.secao h2 {
+  font-size: clamp(2.25rem, 4.6vw, 4.25rem);
   font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+.secao h3 { font-size: 1.25rem; font-weight: 700; }
+.intro { max-width: 65ch; margin-top: 14px; font-size: 1.125rem; color: var(--tinta-suave); }
+
+/* Os quatro passos, ligados por uma linha de medida */
+.processo {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 48px;
+  padding: 0;
+  list-style: none;
+  counter-reset: passo;
+}
+.processo li { position: relative; counter-increment: passo; }
+
+/* Linha com marcas, do desenho deste passo até o próximo */
+.processo li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 44.5px;
+  left: 144px;
+  width: calc(100% - 144px + 32px);
+  height: 7px;
+  background:
+    linear-gradient(var(--grade-forte), var(--grade-forte)) 0 50% / 100% 1px no-repeat,
+    repeating-linear-gradient(to right, var(--grade-forte) 0 1px, transparent 1px 12px) 0 50% / 100% 7px no-repeat;
+}
+
+.passo-figura {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 144px; height: 96px;
+  border: 1px solid var(--grade-forte);
+  border-radius: var(--raio);
+  background-color: var(--papel-quadro);
+  background-image:
+    linear-gradient(to right, var(--grade) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grade) 1px, transparent 1px);
+  background-size: 12px 12px;
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.d-corpo { stroke: var(--tinta); }
+.d-moldura { stroke: var(--tinta-suave); }
+.d-fantasma { stroke: var(--tinta-suave); stroke-dasharray: 1 5; }
+.d-ponto { fill: var(--papel); stroke: var(--tinta); stroke-width: 2; }
+.d-ponto-menor { fill: var(--tinta-suave); stroke: none; }
+.d-prumo { stroke: var(--tinta-suave); stroke-dasharray: 4 4; stroke-width: 1.5; }
+.d-segmento { stroke: var(--tinta); stroke-width: 4; }
+.d-arco { stroke: var(--clinica); stroke-width: 2; }
+.d-adequada { fill: var(--adequada); stroke: none; }
+.d-atencao { fill: var(--atencao); stroke: none; }
+.d-inadequada { fill: var(--inadequada); stroke: none; }
+.d-marcador { stroke: var(--tinta); stroke-width: 3; stroke-linecap: butt; }
+.d-marcador-ponta { fill: var(--tinta); stroke: none; }
+
+.processo h3 { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+.processo h3::before {
+  content: counter(passo);
+  display: inline-grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  border: 1.75px solid var(--tinta);
+  border-radius: var(--raio);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.processo p { margin-top: 8px; max-width: 34ch; color: var(--tinta-suave); }
+
+/* Faixas de classificação e limitações lado a lado */
+.criterios {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 48px;
+  margin-top: 64px;
+  align-items: start;
+}
+
+.tabela-limites { width: 100%; border-collapse: collapse; }
+.tabela-limites caption {
+  padding-bottom: 14px;
+  text-align: left;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.tabela-limites th, .tabela-limites td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--regua-linha);
+}
+.tabela-limites thead th { border-bottom: 1px solid var(--grade-forte); font-size: 0.9375rem; }
+.tabela-limites thead th:first-child {
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.tabela-limites thead th span { display: inline-flex; align-items: center; gap: 6px; }
+.tabela-limites thead th.c-adequada { color: var(--adequada); background: var(--adequada-fundo); }
+.tabela-limites thead th.c-atencao { color: var(--atencao-texto); background: var(--atencao-fundo); }
+.tabela-limites thead th.c-inadequada { color: var(--inadequada); background: var(--inadequada-fundo); }
+.tabela-limites tbody th { font-weight: 600; }
+.tabela-limites td { font-size: 1.125rem; }
+
+.limites { margin-top: 14px; padding: 0; list-style: none; max-width: 52ch; }
+.limites li {
+  position: relative;
+  padding: 12px 0 12px 22px;
+  border-bottom: 1px solid var(--regua-linha);
+}
+.limites li:first-child { border-top: 1px solid var(--regua-linha); }
+.limites li::before {
+  content: "";
+  position: absolute;
+  left: 2px; top: 1.2em;
+  width: 8px; height: 8px;
+  border: 1.75px solid var(--tinta-suave);
+  border-radius: 2px;
+}
+
+/* Sobre o projeto */
+.secao-sobre {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px 80px;
+  align-items: start;
+  background-color: var(--papel-quadro);
+  background-image: var(--grade-quadro);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-position: center;
+}
+.sobre-texto p { max-width: 60ch; margin-top: 16px; }
+.sobre-texto h2 + p { margin-top: 18px; }
+.sobre-texto .botao-secundario { margin-top: 28px; }
+
+/* Dados do projeto em formato de campos de ficha */
+.dados { max-width: 640px; background: var(--papel); border: 1px solid var(--grade-forte); border-radius: var(--raio); }
+.dados > div {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--regua-linha);
+}
+.dados > div:last-child { border-bottom: 0; }
+.dados dt {
+  padding-top: 0.2em;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.dados dd ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+
+/* ------------------------------------------------------------------ */
+/* Rodapé                                                              */
+/* ------------------------------------------------------------------ */
+.rodape {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 24px clamp(32px, 6vw, 112px);
+  padding: clamp(40px, 7vh, 72px) var(--margem) 48px;
+  border-top: 1px solid var(--grade);
+}
+.rodape-marca p { margin-top: 8px; font-size: 0.9375rem; color: var(--tinta-suave); }
+.rodape-avisos { display: grid; gap: 6px; align-content: start; }
+.rodape-aviso { max-width: 80ch; }
+.rodape-aviso strong { font-weight: 650; }
+.rodape-creditos { margin-top: 10px; font-size: 0.9375rem; color: var(--tinta-suave); }
+
+/* ------------------------------------------------------------------ */
+/* Telas menores                                                       */
+/* ------------------------------------------------------------------ */
+
+/* Telas largas (a partir de 1100px): abertura em composição livre.
+   A figura ocupa a altura toda, à direita; o título fica no canto inferior esquerdo. */
+@media (min-width: 1100px) {
+  .hero {
+    display: block;
+    min-height: 640px;
+    min-height: max(640px, calc(100svh - var(--altura-topo)));
+  }
+  .hero-figura {
+    position: absolute;
+    top: 0; bottom: 0;
+    right: var(--margem);
+    flex: none;
+    min-height: 0;
+    aspect-ratio: 640 / 740;
+  }
+  .hero-texto {
+    position: absolute;
+    left: var(--margem);
+    bottom: clamp(32px, 6vh, 64px);
+    padding: 0;
+  }
+  .hero-sub { max-width: min(34em, 40vw); }
+}
+
+/* Notebooks pequenos: um pouco mais compacto para caber na primeira tela */
+@media (max-width: 1280px) and (min-width: 1024px) {
+  .ferramenta { gap: 24px; }
+  .ficha-topo, .ficha-instrucoes { padding-left: 20px; padding-right: 20px; }
+  .ficha-resultado { padding: 0 20px; }
+  .passos-foto li { grid-template-columns: 40px 1fr; column-gap: 14px; }
+  .icone-passo { width: 40px; height: 40px; }
+  .processo { gap: 24px; }
+  .processo li:not(:last-child)::after { width: calc(100% - 144px + 24px); }
+}
+
+/* Telas baixas (notebook 1366x768): a ficha de resultado fica mais justa para
+   o veredito, as duas medidas e a primeira recomendação caberem sem rolar */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .analise-cab { padding-top: 10px; padding-bottom: 8px; }
+  .analise { padding-bottom: 18px; }
+  .quadro-topo { min-height: 2rem; padding-bottom: 8px; }
+  .quadro-rodape { padding-top: 8px; min-height: 2.5rem; }
+  .ficha-topo { padding-top: 12px; padding-bottom: 8px; }
+  .linha { padding: 8px 0; }
+  .linha-geral { padding-top: 10px; }
+  .acoes { padding: 8px 0 10px; }
+  .acoes .botao, .acoes .botao-secundario { min-height: 44px; padding-top: 6px; padding-bottom: 6px; }
+}
+
+/* Abaixo de 1024px: uma coluna, quadro primeiro e ficha embaixo */
+@media (max-width: 1023px) {
+  .analise { height: auto; min-height: 0; padding-bottom: 40px; }
+  .ferramenta {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .quadro-area { flex: none; height: 62svh; min-height: 380px; }
+  /* Com resultado, o quadro encurta para a frase do veredito aparecer logo abaixo dele */
+  [data-estado="resultado"] .quadro-area { height: 50svh; min-height: 300px; }
+  .legenda { flex-wrap: nowrap; white-space: nowrap; }
+  .ficha { overflow: visible; }
+  .ficha-topo { position: static; }
+  .acoes { position: static; }
+  .criterios { grid-template-columns: 1fr; gap: 40px; }
+  .secao-sobre { grid-template-columns: 1fr; }
+  .rodape { grid-template-columns: 1fr; }
+  .processo { grid-template-columns: 1fr 1fr; row-gap: 40px; }
+  .processo li:nth-child(2)::after { display: none; }
+}
+
+/* Tablet e abaixo: sem os links da barra (a página rola até cada seção pelos botões) e faixas em uma coluna */
+@media (max-width: 899px) {
+  .navegacao { display: none; }
+  .pq-topo, .pq-limites { grid-template-columns: 1fr; }
+  .pq-pontos { grid-template-columns: 1fr; gap: 28px; }
+  .pq-pontos h3, .pq-pontos p { max-width: 40ch; }
+}
+
+/* Celular */
+@media (max-width: 640px) {
+  :root { --altura-topo: 56px; }
+  .topo { gap: 8px 12px; }
+  .marca { font-size: 1.25rem; }
+  .marca-icone { width: 28px; height: 28px; }
+  .botao-topo { padding: 0 16px; }
+
+  /* Abertura: figura em cima, título e botão embaixo, tudo na primeira tela */
+  .hero-figura { min-height: 200px; }
+  .hero h1 { font-size: 2.5rem; }
+  .hero-sub { font-size: 1rem; line-height: 1.45; }
+  .hero-acoes { gap: 0 20px; margin-top: 16px; }
+  .hero-texto { padding-bottom: 28px; }
+  /* Letreiros do desenho: maiores, porque o desenho inteiro encolhe na tela pequena */
+  .rot-num { font-size: 52px; }
+  .rot-nome { font-size: 16px; letter-spacing: 0.05em; }
+
+  .secao { padding-block: 56px; }
+  .pq-numeros li { padding-left: 14px; }
+
+  .quadro-topo { flex-wrap: wrap; }
+  .legenda { gap: 6px 14px; font-size: 0.8125rem; }
+  .legenda li { gap: 6px; }
+  .legenda .leg-referencia::before { margin-inline: 6px; }
+  .quadro-rodape { flex-wrap: wrap; align-items: flex-start; }
+  .quadro-rodape p { font-size: 0.875rem; }
+  .zona-texto { padding: 12px 16px; }
+  .zona-texto strong { font-size: 1.1875rem; }
+
+  .ficha-topo, .ficha-instrucoes { padding-left: 16px; padding-right: 16px; }
+  .ficha-topo h3 { font-size: 1.3125rem; }
+  .ficha-meta { flex-basis: 100%; margin-left: 0; justify-content: flex-start; }
+  .ficha-resultado { padding: 0 16px; }
+  .valor { font-size: 2.75rem; }
+  .acoes .botao, .acoes .botao-secundario { flex: 1 1 100%; }
+
+  .processo { grid-template-columns: 1fr; row-gap: 28px; }
+  .processo li {
+    display: grid;
+    grid-template-columns: 144px 1fr;
+    column-gap: 20px;
+    align-items: start;
+  }
+  .processo .passo-figura { grid-row: 1 / 3; }
+  .processo h3 { margin-top: 0; }
+  .processo li:not(:last-child)::after,
+  .processo li:nth-child(2)::after {
+    display: block;
+    top: 96px; left: 71px;
+    width: 7px;
+    height: calc(100% - 96px + 28px);
+    background:
+      linear-gradient(var(--grade-forte), var(--grade-forte)) 50% 0 / 1px 100% no-repeat,
+      repeating-linear-gradient(to bottom, var(--grade-forte) 0 1px, transparent 1px 12px) 50% 0 / 7px 100% no-repeat;
+  }
+
+  .tabela-limites th, .tabela-limites td { padding: 12px 8px; }
+  .tabela-limites td { font-size: 1rem; }
+  .tabela-limites thead th { font-size: 0.8125rem; }
+  .tabela-limites thead th span { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  .dados > div { grid-template-columns: 1fr; gap: 4px; padding: 14px 16px; }
 }
 
 /* ------------------------------------------------------------------ */
-/* Rodapé e aviso                                                      */
+/* Movimento reduzido: tudo fica estático e instantâneo                */
 /* ------------------------------------------------------------------ */
-.aviso {
-  font-size: 0.88rem;
-  color: var(--texto-suave);
-  text-align: center;
-  max-width: 640px;
-  margin: 8px auto 0;
-}
-
-footer {
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--texto-suave);
-  padding: 24px 16px 36px;
-}
-
-/* ------------------------------------------------------------------ */
-/* Celular: uma coluna só e textos um pouco menores                    */
-/* ------------------------------------------------------------------ */
-@media (max-width: 700px) {
-  .topo h1 { font-size: 1.6rem; }
-  .cartao { padding: 20px 16px; }
-  .dicas { grid-template-columns: 1fr; }
-  .resultado-grade { grid-template-columns: 1fr; }
-  .etapas li { font-size: 0.85rem; }
-}
-
-/* Respeita quem prefere menos animação no sistema */
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
