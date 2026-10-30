@@ -96,6 +96,31 @@ analisador-postura/
    O ambiente fica em `%LOCALAPPDATA%\venvs\analisador-postura`, fora da pasta do projeto, para não ser
    sincronizado por OneDrive/Google Drive.
 3. O navegador abre em <http://localhost:8000>. Se a página não carregar de primeira, aguarde alguns segundos e atualize.
+4. Para encerrar, feche a janela preta do terminal (ou aperte `Ctrl+C` nela).
+
+#### Como o `iniciar.bat` funciona
+O `iniciar.bat` é um script do Prompt de Comando do Windows que automatiza a Opção B. Ele executa, em ordem:
+
+| Passo | Comando no script | O que faz |
+|---|---|---|
+| 1 | `chcp 65001` | Muda o terminal para UTF-8, para os acentos aparecerem certos. |
+| 2 | `cd /d "%~dp0"` | Entra na pasta onde o `.bat` está, mesmo que ele seja aberto de outro lugar. |
+| 3 | `set "VENV=..."` | Define o caminho do ambiente virtual: `%LOCALAPPDATA%\venvs\analisador-postura`. |
+| 4 | `if not exist "%VENV%\Scripts\python.exe"` | Verifica se o ambiente virtual já existe. **Se já existe, pula direto para o passo 8** (por isso, a partir da segunda vez, o programa abre rápido). |
+| 5 | `set "PYTHON=..."` | Procura o Python 3.12 em três lugares, nesta ordem: a pasta padrão de instalação (`%LOCALAPPDATA%\Programs\Python\Python312`), o lançador `py -3.12` e o comando `python`. Se não achar nenhum, mostra como instalar (`winget install Python.Python.3.12`) e para. |
+| 6 | `python -m venv "%VENV%"` | Cria o ambiente virtual, uma cópia isolada do Python só para este projeto. |
+| 7 | `pip install -r requirements.txt` | Atualiza o `pip` e instala as bibliotecas com as versões fixas do `requirements.txt` (FastAPI, Ultralytics, PyTorch, OpenCV...). É a parte demorada, cerca de 1 GB de download. |
+| 8 | `start "" http://localhost:8000` | Abre o navegador padrão no endereço da aplicação. |
+| 9 | `cd backend` + `python -m uvicorn app:app --host 0.0.0.0 --port 8000` | Entra na pasta `backend` e inicia o servidor com o Python do ambiente virtual. Ao iniciar, o `postura.py` carrega o modelo; se o arquivo `yolo11n-pose.pt` ainda não existir em `backend/modelos/`, a Ultralytics o baixa automaticamente (≈ 6 MB). |
+| 10 | `pause` | Se o servidor parar por algum erro, a janela não fecha sozinha, para que a mensagem possa ser lida. |
+
+> **Por que o ambiente virtual fica fora da pasta do projeto?** Ele ocupa cerca de 1 GB. Se ficasse dentro
+> de uma pasta sincronizada (OneDrive, Google Drive), seria enviado inteiro para a nuvem.
+
+> **Se a instalação for interrompida** (queda de internet, janela fechada no meio), o ambiente fica incompleto e,
+> como ele já existe, o script não tenta instalar de novo. Nesse caso, apague a pasta
+> `%LOCALAPPDATA%\venvs\analisador-postura` (cole esse caminho na barra do Explorador de Arquivos) e rode o
+> `iniciar.bat` novamente.
 
 ### Opção B — manual (Windows, Linux ou macOS)
 ```bash
