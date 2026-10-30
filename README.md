@@ -1,4 +1,4 @@
-# Analisador Ergonômico de Postura
+# Alinha — Analisador Ergonômico de Postura
 
 Aplicação web que analisa a **postura sentada** a partir de uma **foto de perfil** usando visão computacional.
 O sistema detecta as articulações do corpo com o modelo **YOLO11-pose (Ultralytics)**, calcula os ângulos
@@ -68,9 +68,10 @@ analisador-postura/
 │   ├── postura.py      # Visão computacional: YOLO Pose, cálculo de ângulos, desenho
 │   └── modelos/        # Modelo yolo11n-pose.pt (baixado automaticamente)
 ├── frontend/
-│   ├── index.html      # Estrutura da página
-│   ├── style.css       # Visual (cores por classificação, layout responsivo)
-│   └── app.js          # Envio da foto e exibição do resultado
+│   ├── index.html      # Estrutura da página (abertura, ferramenta, "Como funciona", "Sobre")
+│   ├── style.css       # Visual (quadro de avaliação, ficha, cores por classificação, layout responsivo)
+│   ├── app.js          # Escolha e envio da foto, preenchimento da ficha e animações
+│   └── fontes/         # Fonte Figtree (.woff2) guardada no projeto, funciona sem internet
 ├── requirements.txt    # Dependências Python com versões fixas
 ├── iniciar.bat         # Atalho para instalar e iniciar no Windows
 └── README.md           # Esta documentação
@@ -135,12 +136,15 @@ A documentação interativa da API (gerada pelo FastAPI) fica em <http://localho
 ## 5. Como usar
 1. Peça para alguém tirar uma foto sua **de lado**, sentado na posição em que você costuma trabalhar,
    mostrando **da cabeça até o quadril**.
-2. Na página, clique na área de envio (ou arraste a foto) e depois em **"Analisar minha postura"**.
-3. Veja o resultado:
-   - a foto com o esqueleto e as linhas do pescoço e do tronco coloridas
-     (🟢 adequada · 🟠 atenção · 🔴 inadequada);
-   - o ângulo medido de cada parte e o valor ideal;
-   - recomendações para corrigir a postura.
+2. Na página, vá até **"Analise sua postura"** (botão **"Começar a analisar"** ou link **Analisar** no topo).
+3. Arraste a foto para o **quadro de avaliação**, clique nele para escolher o arquivo (no celular, toque) ou
+   cole uma imagem com **Ctrl+V**. Depois clique em **"Analisar postura"**.
+4. Veja o resultado:
+   - no quadro, a foto com o esqueleto e as linhas do pescoço e do tronco coloridas
+     (🟢 adequada · 🟠 atenção · 🔴 inadequada) e a vertical de referência;
+   - na **ficha de avaliação**, o resultado geral, o ângulo de cada parte com uma régua colorida
+     e a lista **"O que fazer"** com recomendações;
+   - os botões **"Baixar imagem"** e **"Analisar outra foto"**.
 
 ---
 
@@ -211,30 +215,58 @@ O back-end é uma API em **FastAPI** (`backend/app.py`) que usa o módulo de vis
 ## 7. Funcionamento do front-end
 
 Interface em HTML, CSS e JavaScript puros (`frontend/`), servida pelo próprio back-end,
-pensada para **usuários leigos**:
+pensada para **usuários leigos**. A marca da interface é **Alinha**. A ideia visual é a de uma avaliação
+de fisioterapia: a foto fica sobre um **quadro de avaliação** (grade com linha de prumo) e as medidas
+aparecem numa **ficha de avaliação** ao lado.
 
-- **Barra de etapas** (*Foto → Análise → Resultado*): mostra em que ponto do processo o usuário está
-  (função `definirEtapa` em `app.js`).
-- **Passo 1 — envio:** quatro cartões com dicas de como tirar a foto, área para clicar ou arrastar a imagem,
-  prévia da foto (com o selo "Trocar foto") e botão "Analisar minha postura" (fica desabilitado até uma foto
-  ser escolhida).
-- **Envio:** `app.js` monta um `FormData` com o campo `foto` e faz `fetch("POST /api/analisar")`.
-  Enquanto aguarda, o botão mostra "Analisando sua postura..." com uma animação.
-- **Passo 2 — resultado:**
-  - faixa colorida com ícone e o resumo geral (adequada / atenção / inadequada);
-  - foto anotada com legenda explicando as linhas, e link **"Baixar imagem"** para salvar o resultado;
-  - cartões de pescoço e tronco com o ângulo, um selo com a classificação e uma **régua colorida**
-    (verde → laranja → vermelho) com um marcador na posição do ângulo medido. A régua vai de 0° até
-    1,5 × o limite de "atenção" e é montada pela função `montarRegua` a partir dos `limites` enviados pela API;
-  - lista de recomendações em forma de checklist.
-- **Erros:** mensagens do back-end (campo `detail`) aparecem em uma caixa vermelha; se o servidor
+### Organização da página (`index.html`)
+Página única com barra de navegação fixa no topo (o link da seção visível fica destacado):
+1. **Abertura** (`#inicio`): título, desenho de uma pessoa sentada com os graus contando
+   (`animarGrausHero`) e botão "Começar a analisar".
+2. **Por que importa** (`#por-que`): cartões explicando o problema da má postura.
+3. **Analise sua postura** (`#analisar`): a ferramenta (quadro + ficha), descrita abaixo.
+4. **Como funciona** (`#como-funciona`): os passos foto de perfil → pontos do corpo → ângulos →
+   classificação, e as limitações.
+5. **Sobre** (`#sobre`): disciplina, professor, núcleo/ODS, integrantes e link para o GitHub.
+
+### A ferramenta (`app.js`)
+A tela funciona como uma pequena **máquina de estados**, guardada no atributo
+`data-estado` da `section#analisar` (função `definirEstado`):
+
+```
+vazio  →  pronto  →  analisando  →  resultado
+```
+
+- **vazio:** o quadro mostra uma silhueta-guia e aceita a foto de três jeitos: clicar (ou tocar, no celular),
+  **arrastar e soltar** ou **colar com Ctrl+V**. A ficha mostra as quatro dicas de "Como tirar a foto".
+- **pronto:** a foto escolhida aparece como prévia, com o botão "Trocar foto". Antes de enviar,
+  `validarArquivo` confere tipo (JPG/PNG/WEBP) e tamanho (até 10 MB), com as mesmas mensagens do back-end.
+  O botão **"Analisar postura"** só é habilitado neste estado.
+- **analisando:** `enviarFoto` monta um `FormData` com o campo `foto` e faz `fetch` em `POST /api/analisar`.
+  Enquanto espera, uma linha de varredura passa pela foto com o aviso "Localizando orelha, ombro e quadril…"
+  (tempo mínimo de 600 ms para o passo ser visível na apresentação).
+- **resultado:** `validarResposta` confere se a resposta tem os campos esperados e `preencherFicha` monta:
+  - o **veredito geral** (adequada / atenção / inadequada) com ícone, o lado medido e a data;
+  - **pescoço** e **tronco** com o ângulo, um selo com a classificação e uma **régua colorida**
+    (verde → laranja → vermelho) com um marcador na posição do ângulo. A régua é montada por `montarRegua`
+    a partir dos `limites` enviados pela API;
+  - a lista **"O que fazer"** com as recomendações;
+  - os botões **"Baixar imagem"** e **"Analisar outra foto"** (`recomecar`, volta ao estado vazio).
+
+  A foto já vem desenhada pelo back-end (o front-end **não** redesenha a análise). `revelarResultado`
+  faz uma animação única: a foto é revelada de cima para baixo enquanto os ângulos contam a partir de zero.
+
+### Outros detalhes
+- **Erros:** mensagens do back-end (campo `detail`) aparecem em uma caixa de alerta na ficha; se o servidor
   estiver desligado, a página avisa que não conseguiu se conectar.
-- **Responsivo:** no celular o layout passa para uma coluna.
-- **Tema escuro automático:** segue a configuração do sistema (`prefers-color-scheme`); as cores ficam em
-  variáveis CSS no início de `style.css`.
-- **Acessibilidade:** contorno visível para navegação por teclado, textos alternativos nas imagens e
-  animações desligadas para quem prefere menos movimento (`prefers-reduced-motion`).
-- Botão **"Analisar outra foto"** volta ao estado inicial.
+- **Responsivo:** em telas pequenas o quadro fica em cima e a ficha embaixo, e após a análise a página
+  rola até o quadro. Em telas de toque os textos mudam ("Toque para escolher a foto").
+- **Tema claro fixo**, de propósito: a página é apresentada em projetor e não deve ficar escura por causa da
+  configuração do sistema. As cores ficam em variáveis CSS no início de `style.css`.
+- **Fonte Figtree** guardada em `frontend/fontes/`, então o visual não depende de internet.
+- **Acessibilidade:** contorno visível na navegação por teclado, textos alternativos nas imagens,
+  o resultado geral é anunciado por leitores de tela e as animações são desligadas para quem prefere
+  menos movimento (`prefers-reduced-motion`).
 - Os links para `style.css` e `app.js` têm `?v=N` no final; ao alterar esses arquivos, aumente o número
   para o navegador não usar a versão antiga guardada em cache.
 
