@@ -72,6 +72,7 @@ analisador-postura/
 │   ├── style.css       # Visual (quadro de avaliação, ficha, cores por classificação, layout responsivo)
 │   ├── app.js          # Escolha e envio da foto, preenchimento da ficha e animações
 │   └── fontes/         # Fonte Figtree (.woff2) guardada no projeto, funciona sem internet
+├── exemplos/           # Fotos de exemplo geradas por IA, para testar a ferramenta
 ├── requirements.txt    # Dependências Python com versões fixas
 ├── iniciar.bat         # Atalho para instalar e iniciar no Windows (dois cliques)
 ├── iniciar.sh          # Atalho para instalar e iniciar no Linux
@@ -202,6 +203,16 @@ A documentação interativa da API (gerada pelo FastAPI) fica em <http://localho
    - na **ficha de avaliação**, o resultado geral, o ângulo de cada parte com uma régua colorida
      e a lista **"O que fazer"** com recomendações;
    - os botões **"Baixar imagem"** e **"Analisar outra foto"**.
+
+### Fotos de exemplo
+A pasta `exemplos/` traz três fotos **geradas por inteligência artificial** (não são pessoas reais), para testar a
+ferramenta sem precisar tirar uma foto. O nome de cada arquivo indica o resultado que o sistema devolve:
+
+| Arquivo | Cena | Pescoço | Tronco | Resultado geral |
+|---|---|---|---|---|
+| `exemplo-inadequada.jpg` | Curvado sobre o notebook | 60,2° 🔴 inadequada | 19,1° 🟠 atenção | 🔴 inadequada |
+| `exemplo-atencao-pescoco.jpg` | Costas retas, cabeça inclinada para o teclado | 32,7° 🟠 atenção | 5,6° 🟢 adequada | 🟠 atenção |
+| `exemplo-atencao-tronco.jpg` | Cabeça alinhada, tronco reclinado no encosto | 10,9° 🟢 adequada | 13,4° 🟠 atenção | 🟠 atenção |
 
 ---
 
